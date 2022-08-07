@@ -173,7 +173,7 @@ __end_tabs
                     break;
                 case Program.RUN_OPTIONS.run:
                     Pack();
-                    Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" " + Util.GetGameName() + ".p8");
+                    Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -run " + Util.GetGameName() + ".p8");
                     break;
             }
 
