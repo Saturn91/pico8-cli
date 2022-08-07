@@ -90,6 +90,38 @@ namespace pico8_cli
 
             return lines.ToArray();
         }
+
+        public static void ExecuteCommandSync(object command)
+        {
+            try
+            {
+                // create the ProcessStartInfo using "cmd" as the program to be run,
+                // and "/c " as the parameters.
+                // Incidentally, /c tells cmd that we want it to execute the command that follows,
+                // and then exit.
+                System.Diagnostics.ProcessStartInfo procStartInfo =
+                    new System.Diagnostics.ProcessStartInfo("cmd", "/c " + command);
+
+                // The following commands are needed to redirect the standard output.
+                // This means that it will be redirected to the Process.StandardOutput StreamReader.
+                procStartInfo.RedirectStandardOutput = true;
+                procStartInfo.UseShellExecute = false;
+                // Do not create the black window.
+                procStartInfo.CreateNoWindow = true;
+                // Now we create a process, assign its ProcessStartInfo and start it
+                System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                proc.StartInfo = procStartInfo;
+                proc.Start();
+                // Get the output into a string
+                string result = proc.StandardOutput.ReadToEnd();
+                // Display the command output.
+                Console.WriteLine(result);
+            }
+            catch (Exception objException)
+            {
+                Error(command + " failed.: " + objException.ToString());
+            }
+        }
     }
 
     class Pico8
@@ -98,6 +130,7 @@ namespace pico8_cli
 
 last unpacked: #UNPACKED_DATE
 last packed: never
+last run: never
 
 __Lua tabs:
 __end_tabs
@@ -137,6 +170,10 @@ __end_tabs
                     break;
                 case Program.RUN_OPTIONS.pack:
                     succeded = Pack();
+                    break;
+                case Program.RUN_OPTIONS.run:
+                    Pack();
+                    Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" " + Util.GetGameName() + ".p8");
                     break;
             }
 
@@ -343,6 +380,12 @@ __sfx__
                         if (configFileLines[i].Contains("last packed:")) configFileLines[i] = "last packed: " + DateTime.Now.ToString();
                     }
                     break;
+                case Program.RUN_OPTIONS.run:
+                    for (int i = 0; i < configFileLines.Length; i++)
+                    {
+                        if (configFileLines[i].Contains("last run:")) configFileLines[i] = "last run: " + DateTime.Now.ToString();
+                    }
+                    break;
             }
 
             File.WriteAllLines(configFile, configFileLines);
@@ -536,7 +579,7 @@ __sfx__
         public const string PRG_NAME = "pico8-cli";
         public readonly static string INSTALLATION_PATH = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         public static string current_path = Setup.GetCurrentWorkingSpace();
-        public enum RUN_OPTIONS { init, unpack, pack };
+        public enum RUN_OPTIONS { init, unpack, pack, run };
         public static readonly string[] RUN_OPTIONS_STRINGS = Enum.GetNames(typeof(RUN_OPTIONS));
         public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
         public static readonly string CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";

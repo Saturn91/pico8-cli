@@ -15,6 +15,10 @@
     "pico8-cli-unpack-override": {
       "commandName": "Project",
       "commandLineArgs": "unpack override debug"
+    },
+    "pico8-cli-run": {
+      "commandName": "Project",
+      "commandLineArgs": "run"
     }
   }
 }
