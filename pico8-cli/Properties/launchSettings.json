@@ -1,8 +1,16 @@
 {
   "profiles": {
-    "pico8-cli": {
+    "pico8-cli-init": {
       "commandName": "Project",
       "commandLineArgs": "init debug"
+    },
+    "pico8-cli-unpack": {
+      "commandName": "Project",
+      "commandLineArgs": "unpack debug"
+    },
+    "pico8-cli-pack": {
+      "commandName": "Project",
+      "commandLineArgs": "pack debug"
     }
   }
 }

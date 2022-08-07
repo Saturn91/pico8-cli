@@ -51,6 +51,11 @@ namespace pico8_cli
             Console.WriteLine("[info]: " + msg);
         }
 
+        public static void Error(string err)
+        {
+            Console.WriteLine("[err.]: " + err);
+        }
+
         public static string ArrayToString<T>(T[] array)
         {
             string result = "";
@@ -63,10 +68,29 @@ namespace pico8_cli
             string[] folders = Program.current_path.Split("\\");
             return folders[folders.Length - 1];
         }
+
+        public static string[] GetFileLines(string file)
+        {
+            List<string> lines = new List<string>();
+            foreach (string line in File.ReadLines(@file))
+            {
+                lines.Add(line);
+            }
+
+            return lines.ToArray();
+        }
     }
 
     class Pico8
     {
+        private const string INITAL_UNPACK_FILE = @"pico8-cli.p8.config for #GAME_NAME:
+
+last unpacked: #UNPACKED_DATE
+last packed: never
+
+# Lua tabs:
+tab1: #TABS
+";
         private static void StartLog()
         {
             Util.Debug("starting [" + Program.current_mode + "] process at: " + Program.current_path);
@@ -79,25 +103,32 @@ namespace pico8_cli
 
         public static void Run(Program.RUN_OPTIONS mode) {
             StartLog();
+            bool succeded = false;
             switch (mode)
             {
                 case Program.RUN_OPTIONS.init:
-                    Pico8.Init();
+                    succeded = Init(); 
                     break;
                 case Program.RUN_OPTIONS.unpack:
-                    Pico8.UnPack();
+                    succeded = UnPack();
                     break;
                 case Program.RUN_OPTIONS.pack:
-                    Pico8.Pack();
+                    succeded = Pack();
                     break;
             }
-            EndLog();
+
+            if (succeded)
+            {
+                UpdateConfigFile(mode);
+                EndLog();
+            }
         }
 
-        
-        private static void Init()
+        private static bool Init()
         {
-            string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
+            if (!File.Exists(Util.GetGameName() + ".p8.config"))
+            {
+                string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
 version 36
 __lua__
 --main
@@ -182,12 +213,67 @@ __gfx__
 __sfx__
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ";
-            File.WriteAllTextAsync(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
+                File.WriteAllTextAsync(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
+                return true;
+            }
+
+            Util.Error(Util.GetGameName() + " is already initialized");
+            return false;
         }
 
-        private static void Pack() { }
+        private static bool Pack() {
+            return true;
+        }
 
-        private static void UnPack() { }
+        private static void UpdateConfigFile(Program.RUN_OPTIONS mode)
+        {
+
+            string configFile = Util.GetGameName() + ".p8.config";
+            string[] configFileLines;
+
+            if (!File.Exists(configFile))
+            {
+                string content = INITAL_UNPACK_FILE
+                    .Replace("#GAME_NAME", Util.GetGameName())
+                    .Replace("#UNPACKED_DATE", DateTime.Now.ToString());
+
+                configFileLines = content.Split(System.Environment.NewLine);
+            } else
+            {
+                configFileLines = Util.GetFileLines(configFile);
+            }
+
+            switch (mode)
+            {
+                case Program.RUN_OPTIONS.unpack:
+                    for(int i = 0; i < configFileLines.Length; i++)
+                    {
+                        if (configFileLines[i].Contains("last unpacked:")) configFileLines[i] = "last unpacked: " + DateTime.Now.ToString();
+                    }
+                    break;
+                case Program.RUN_OPTIONS.pack:
+                    for (int i = 0; i < configFileLines.Length; i++)
+                    {
+                        if (configFileLines[i].Contains("last packed:")) configFileLines[i] = "last packed: " + DateTime.Now.ToString();
+                    }
+                    break;
+            }
+
+            File.WriteAllLines(configFile, configFileLines);
+        }
+
+        private static bool UnPack() {
+            string fileToUnpack = Util.GetGameName() + ".p8";
+            if (!File.Exists(fileToUnpack))
+            {
+                Util.Error(fileToUnpack + " does not exist...");
+                return false;
+            }
+
+
+
+            return true;
+        }
     }
 
     class Program
