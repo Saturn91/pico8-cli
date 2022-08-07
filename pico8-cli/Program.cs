@@ -98,7 +98,7 @@ namespace pico8_cli
 last unpacked: #UNPACKED_DATE
 last packed: never
 
-# Lua tabs:
+Lua tabs:
 tab1: #TABS
 ";
 
@@ -129,7 +129,7 @@ tab1: #TABS
             switch (mode)
             {
                 case Program.RUN_OPTIONS.init:
-                    succeded = Init(); 
+                    succeded = Init();
                     break;
                 case Program.RUN_OPTIONS.unpack:
                     succeded = UnPack();
@@ -148,7 +148,7 @@ tab1: #TABS
 
         private static bool Init()
         {
-            if (!File.Exists(".pico8-cli/" + Util.GetGameName() + ".p8.config"))
+            if (!File.Exists(Program.CONFIG_FILE_PATH))
             {
                 Directory.CreateDirectory(".pico8-cli");
                 string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
@@ -236,7 +236,14 @@ __gfx__
 __sfx__
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ";
-                File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
+                if (!File.Exists(Util.GetGameName() + ".p8"))
+                {
+                    File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
+                } else
+                {
+                    Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
+                }
+                UpdateConfigFile(Program.RUN_OPTIONS.init);
                 return UnPack();
             }
 
@@ -251,7 +258,7 @@ __sfx__
         private static void UpdateConfigFile(Program.RUN_OPTIONS mode)
         {
 
-            string configFile = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
+            string configFile = Program.CONFIG_FILE_PATH;
             string[] configFileLines;
 
             if (!File.Exists(configFile))
@@ -328,12 +335,46 @@ __sfx__
 
     class Tab
     {
+        public static List<string> currentTabs;
+        public static void InitTabs()
+        {
+            currentTabs = new List<string>();
+        }
+
+        public static void AddTab(string tab)
+        {
+            currentTabs.Add(tab);
+        }
+
+        public static void UpdateConfig()
+        {
+            List<string> configLines = new List<string>(File.ReadAllLines(Program.CONFIG_FILE_PATH));
+            List<string> newConfigLines = new List<string>();
+            for(int i = 0; i < configLines.Count; i++)
+            {
+                string line = configLines[i];
+                newConfigLines.Add(line);
+                if(configLines[i] == "Lua tabs:")
+                {
+                    for(int j = 0; j < currentTabs.Count; j++)
+                    {
+                        newConfigLines.Add(currentTabs[j]);
+                    }
+                    break;
+                }
+            }
+
+            File.WriteAllLines(Program.CONFIG_FILE_PATH, newConfigLines.ToArray());
+        }
+
         private string name;
         private string[] content;
+        private int number;
 
-        public Tab(string name)
+        public Tab(string name, int number)
         {
             this.name = name;
+            this.number = number;
         }
 
         public void SetContent(string[] codeLines)
@@ -344,8 +385,13 @@ __sfx__
 
         private void Write()
         {
+            string numberFiller = "";
+            if (number < 10) numberFiller = "0" + numberFiller;
+            string tabNumberString = numberFiller + number;
             Directory.CreateDirectory("lua");
-            File.WriteAllLines("lua/" + name + ".lua", content);
+            string numberedTabName = tabNumberString + "_" + name;
+            File.WriteAllLines("lua/" + numberedTabName + ".lua", content);
+            AddTab(numberedTabName);
         }
     }
 
@@ -369,8 +415,9 @@ __sfx__
             int firstLuaLine = -1;
             int lastluaLine = -1;
 
+            Tab.InitTabs();
             int tabCounter = 1;
-            Tab actualTab = new Tab("0" + tabCounter + "_main");
+            Tab actualTab = new Tab("main", tabCounter);
             List<string> currentTabContent = new List<string>();
 
             for (int i = 0; i < fileLines.Length; i++)
@@ -393,15 +440,12 @@ __sfx__
 
                         tabCounter += 1;
 
-                        string tabEnumerator = "0" + tabCounter;
-                        if (tabCounter > 9) tabEnumerator = "" + tabCounter;
-
                         string tabName = "tab";
 
                         string nextLine = fileLines[i + 1];
                         if (nextLine.StartsWith("--") && nextLine.Length > 2) tabName = nextLine.Substring(2);
 
-                        actualTab = new Tab(tabEnumerator + "_" + tabName);
+                        actualTab = new Tab(tabName, tabCounter);
                     }
                     // other tag reached no longer within lua code
                     else if (Array.IndexOf(Pico8.P8_TAGS, line) != -1) {
@@ -414,6 +458,7 @@ __sfx__
             }
 
             actualTab.SetContent(currentTabContent.ToArray());
+            Tab.UpdateConfig();
 
             return new UnpackInfo(firstLuaLine, lastluaLine);
         }
@@ -427,6 +472,7 @@ __sfx__
         public enum RUN_OPTIONS { init, unpack, pack };
         public static readonly string[] RUN_OPTIONS_STRINGS = Enum.GetNames(typeof(RUN_OPTIONS));
         public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
+        public static readonly string CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
 
         static void LogInstallAndLocationInfos()
         {
