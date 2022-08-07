@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "pico8-cli": {
+      "commandName": "Project",
+      "commandLineArgs": "init debug"
+    }
+  }
+}
