@@ -10,7 +10,8 @@ namespace pico8_cli
     {
         public static Dictionary<string, bool> properties = new Dictionary<string, bool>()
         {
-            { "debug", false }
+            { "debug", false },
+            { "override", false }
         };
 
 
@@ -369,6 +370,12 @@ __sfx__
         }
 
         private static bool UnPack() {
+            if (Directory.Exists("lua") & !Setup.properties["override"])
+            {
+                Util.Info("The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'");
+                return false;
+            }
+
             string fileToUnpack = Util.GetGameName() + ".p8";
             if (!File.Exists(fileToUnpack))
             {
@@ -382,6 +389,7 @@ __sfx__
 
             //actual unpack
             Unpack.UnpackInfo info = Unpack.Lua(lines);
+
             string[] before = lines.SubArray(0, info.firstLine - 1);
             string[] after = lines.SubArray(info.lastLine + 1, lines.Length-1);
             CreateRestFileContent(before, after);
