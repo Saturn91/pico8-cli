@@ -91,6 +91,18 @@ last packed: never
 # Lua tabs:
 tab1: #TABS
 ";
+
+        public static readonly string[] P8_TAGS =
+        {
+            "__lua__",
+            "__gfx__",
+            "__gff__",
+            "__label__",
+            "__map__",
+            "__sfx__",
+            "__music__"
+        };
+
         private static void StartLog()
         {
             Util.Debug("starting [" + Program.current_mode + "] process at: " + Program.current_path);
@@ -270,9 +282,86 @@ __sfx__
                 return false;
             }
 
+            string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
+            Unpack.Lua(lines);
 
             return true;
+        }
+    }
+
+    class Unpack
+    {
+        private class Tab
+        {
+            private string name;
+            private string[] content;
+
+            public Tab(string name)
+            {
+                this.name = name;
+            }
+
+            public void SetContent(string[] codeLines)
+            {
+                content = codeLines;
+                Write();
+            }
+
+            private void Write()
+            {
+                Directory.CreateDirectory("lua");
+                File.WriteAllLinesAsync("lua/" + name + ".lua", content);
+            }
+        }
+
+        public static void Lua(string[] fileLines)
+        {
+            bool inLuaSection = false;
+
+            int tabCounter = 1;
+            Tab actualTab = new Tab("0" + tabCounter + "_main");
+            List<string> currentTabContent = new List<string>();
+
+            for (int i = 0; i < fileLines.Length; i++)
+            {
+                string line = fileLines[i];
+                if (! inLuaSection )
+                {
+                    if (line == "__lua__")
+                    {
+                        inLuaSection = true;
+                    }
+                } else if (inLuaSection)
+                {
+                    //create new Tab
+                    if (line == "-->8")
+                    {
+                        actualTab.SetContent(currentTabContent.ToArray());
+                        currentTabContent.Clear();
+
+                        tabCounter += 1;
+
+                        string tabEnumerator = "0" + tabCounter;
+                        if (tabCounter > 9) tabEnumerator = "" + tabCounter;
+
+                        string tabName = "tab";
+
+                        string nextLine = fileLines[i + 1];
+                        if (nextLine.StartsWith("--") && nextLine.Length > 2) tabName = nextLine.Substring(2);
+
+                        actualTab = new Tab(tabEnumerator + "_" + tabName);
+                    }
+                    // other tag reached no longer within lua code
+                    else if (Array.IndexOf(Pico8.P8_TAGS, line) != -1) {
+                        break;
+                    } else {
+                        currentTabContent.Add(line);
+                    }                
+                }
+            }
+
+            actualTab.SetContent(currentTabContent.ToArray());
         }
     }
 
