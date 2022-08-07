@@ -419,6 +419,14 @@ __sfx__
                 return false;
             }
 
+            //clear lua folder
+            DirectoryInfo di = new DirectoryInfo("lua");
+
+            foreach (FileInfo file in di.GetFiles())
+            {
+                file.Delete();
+            }
+
             string fileToUnpack = Util.GetGameName() + ".p8";
             if (!File.Exists(fileToUnpack))
             {
