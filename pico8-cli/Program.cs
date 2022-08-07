@@ -36,8 +36,18 @@ namespace pico8_cli
         {
             return Environment.CurrentDirectory;
         }       
-    }  
-    
+    }
+
+    public static class Extensions
+    {
+        public static T[] SubArray<T>(this T[] array, int offset, int end)
+        {
+            T[] result = new T[end - offset];
+            Array.Copy(array, offset, result, 0, end - offset);
+            return result;
+        }
+    }
+
     class Util
     {
         public static void Debug(string msg)
@@ -274,6 +284,27 @@ __sfx__
             File.WriteAllLines(configFile, configFileLines);
         }
 
+        private static void CreateBackupBeforeUnpacking(string[] lines)
+        {
+            //create backup
+            Directory.CreateDirectory(".backups");
+            string datePrefix = DateTime.Now.ToString()
+                .Replace(".", "")
+                .Replace(" ", "")
+                .Replace(":", "") + "_";
+            File.WriteAllLines(".backups/" + datePrefix + Util.GetGameName() + ".p8", lines);
+        }
+
+        private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
+        {
+            Directory.CreateDirectory(".pico8-cli");
+
+            List<string> lines = new List<string>(linesBefore);
+            lines.Add("UNPACKED");
+            lines.AddRange(linesAfter);
+            File.WriteAllLines(".pico8-cli/restOfFile.p8", lines);
+        }
+
         private static bool UnPack() {
             string fileToUnpack = Util.GetGameName() + ".p8";
             if (!File.Exists(fileToUnpack))
@@ -284,16 +315,13 @@ __sfx__
 
             string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
-            //create backup
-            Directory.CreateDirectory(".backups");
-            string datePrefix = DateTime.Now.ToString()
-                .Replace(".", "")
-                .Replace(" ", "")
-                .Replace(":", "") + "_";
-            File.WriteAllLines(".backups/"+ datePrefix + Util.GetGameName() + ".p8", lines);
+            CreateBackupBeforeUnpacking(lines);
 
             //actual unpack
-            Unpack.Lua(lines);
+            Unpack.UnpackInfo info = Unpack.Lua(lines);
+            string[] before = lines.SubArray(0, info.firstLine - 1);
+            string[] after = lines.SubArray(info.lastLine + 1, lines.Length-1);
+            CreateRestFileContent(before, after);
 
             return true;
         }
@@ -324,9 +352,23 @@ __sfx__
 
     class Unpack
     {
-        public static void Lua(string[] fileLines)
+        public class UnpackInfo
+        {
+            public int firstLine { get; }
+            public int lastLine { get; }
+
+            public UnpackInfo(int firstLine, int lastLine)
+            {
+                this.firstLine = firstLine;
+                this.lastLine = lastLine;
+            }
+        }
+
+        public static UnpackInfo Lua(string[] fileLines)
         {
             bool inLuaSection = false;
+            int firstLuaLine = -1;
+            int lastluaLine = -1;
 
             int tabCounter = 1;
             Tab actualTab = new Tab("0" + tabCounter + "_main");
@@ -340,6 +382,7 @@ __sfx__
                     if (line == "__lua__")
                     {
                         inLuaSection = true;
+                        firstLuaLine = i + 1;
                     }
                 } else if (inLuaSection)
                 {
@@ -363,6 +406,7 @@ __sfx__
                     }
                     // other tag reached no longer within lua code
                     else if (Array.IndexOf(Pico8.P8_TAGS, line) != -1) {
+                        lastluaLine = i - 1;
                         break;
                     } else {
                         currentTabContent.Add(line);
@@ -371,6 +415,8 @@ __sfx__
             }
 
             actualTab.SetContent(currentTabContent.ToArray());
+
+            return new UnpackInfo(firstLuaLine, lastluaLine);
         }
     }
 
