@@ -148,8 +148,9 @@ tab1: #TABS
 
         private static bool Init()
         {
-            if (!File.Exists(Util.GetGameName() + ".p8.config"))
+            if (!File.Exists(".pico8-cli/" + Util.GetGameName() + ".p8.config"))
             {
+                Directory.CreateDirectory(".pico8-cli");
                 string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
 version 36
 __lua__
@@ -250,7 +251,7 @@ __sfx__
         private static void UpdateConfigFile(Program.RUN_OPTIONS mode)
         {
 
-            string configFile = Util.GetGameName() + ".p8.config";
+            string configFile = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
             string[] configFileLines;
 
             if (!File.Exists(configFile))
@@ -287,18 +288,16 @@ __sfx__
         private static void CreateBackupBeforeUnpacking(string[] lines)
         {
             //create backup
-            Directory.CreateDirectory(".backups");
+            Directory.CreateDirectory(".pico8-cli/backups");
             string datePrefix = DateTime.Now.ToString()
                 .Replace(".", "")
                 .Replace(" ", "")
                 .Replace(":", "") + "_";
-            File.WriteAllLines(".backups/" + datePrefix + Util.GetGameName() + ".p8", lines);
+            File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + ".p8", lines);
         }
 
         private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
         {
-            Directory.CreateDirectory(".pico8-cli");
-
             List<string> lines = new List<string>(linesBefore);
             lines.Add("UNPACKED");
             lines.AddRange(linesAfter);
