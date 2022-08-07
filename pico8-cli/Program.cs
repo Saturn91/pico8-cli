@@ -445,7 +445,7 @@ __sfx__
             Unpack.UnpackInfo info = Unpack.Lua(lines);
 
             string[] before = lines.SubArray(0, info.firstLine - 1);
-            string[] after = lines.SubArray(info.lastLine + 1, lines.Length-1);
+            string[] after = lines.SubArray(info.lastLine + 1, lines.Length);
             CreateRestFileContent(before, after);
 
             return true;
