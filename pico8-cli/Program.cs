@@ -98,8 +98,8 @@ namespace pico8_cli
 last unpacked: #UNPACKED_DATE
 last packed: never
 
-Lua tabs:
-tab1: #TABS
+__Lua tabs:
+__end_tabs
 ";
 
         public static readonly string[] P8_TAGS =
@@ -252,6 +252,61 @@ __sfx__
         }
 
         private static bool Pack() {
+            // 1. get all tabs from config file
+            string[] configLines = File.ReadAllLines(Program.CONFIG_FILE_PATH);
+            List<string> tabFiles = new List<string>();
+
+            bool inTabsArea = false;
+            for(int i = 0; i < configLines.Length; i++)
+            {
+                string line = configLines[i];
+                if (!inTabsArea && line == "__Lua tabs:")
+                {
+                    inTabsArea = true;
+                } else if (line == "__end_tabs")
+                {
+                    break;
+                } else if (inTabsArea)
+                {
+                    tabFiles.Add("lua/" + line + ".lua");
+                }
+            }
+
+            // 2. for each tab insert the lines into the original .p8 file
+            List<string> luaLines = new List<string>();
+            for (int i = 0; i < tabFiles.Count; i++)
+            {
+                string tab = tabFiles[i];
+
+                string[] lines = File.ReadAllLines(tab);
+                luaLines.AddRange(lines);
+                if (i < tabFiles.Count -1)
+                {
+                    luaLines.Add("-->8");
+                }
+            }
+
+            // 3. create backup of the original file (with before_pack)
+            CreateBackupOfPico8File("before_pack");
+
+            // 4. override file
+            List<string> packedPico8Lines = new List<string>();
+            List<string> restOfFileLines = new List<string>(File.ReadAllLines("." + Program.PRG_NAME + "/" + "restOfFile.p8"));
+
+            foreach(string line in restOfFileLines)
+            {
+                if (line == "__UNPACKED")
+                {
+                    packedPico8Lines.Add("__lua__");
+                    packedPico8Lines.AddRange(luaLines);
+                } else
+                {
+                    packedPico8Lines.Add(line);
+                }
+            }
+
+            File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
+
             return true;
         }
 
@@ -292,21 +347,23 @@ __sfx__
             File.WriteAllLines(configFile, configFileLines);
         }
 
-        private static void CreateBackupBeforeUnpacking(string[] lines)
+        private static void CreateBackupOfPico8File(string prefix)
         {
+            string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
+
             //create backup
             Directory.CreateDirectory(".pico8-cli/backups");
             string datePrefix = DateTime.Now.ToString()
                 .Replace(".", "")
                 .Replace(" ", "")
                 .Replace(":", "") + "_";
-            File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + ".p8", lines);
+            File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + "." + prefix + ".p8", lines);
         }
 
         private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
         {
             List<string> lines = new List<string>(linesBefore);
-            lines.Add("UNPACKED");
+            lines.Add("__UNPACKED");
             lines.AddRange(linesAfter);
             File.WriteAllLines(".pico8-cli/restOfFile.p8", lines);
         }
@@ -321,7 +378,7 @@ __sfx__
 
             string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
-            CreateBackupBeforeUnpacking(lines);
+            CreateBackupOfPico8File("before_unpack");
 
             //actual unpack
             Unpack.UnpackInfo info = Unpack.Lua(lines);
@@ -354,7 +411,7 @@ __sfx__
             {
                 string line = configLines[i];
                 newConfigLines.Add(line);
-                if(configLines[i] == "Lua tabs:")
+                if(configLines[i] == "__Lua tabs:")
                 {
                     for(int j = 0; j < currentTabs.Count; j++)
                     {
@@ -363,6 +420,8 @@ __sfx__
                     break;
                 }
             }
+
+            newConfigLines.Add("__end_tabs");
 
             File.WriteAllLines(Program.CONFIG_FILE_PATH, newConfigLines.ToArray());
         }
@@ -380,10 +439,10 @@ __sfx__
         public void SetContent(string[] codeLines)
         {
             content = codeLines;
-            Write();
+            Unpack();
         }
 
-        private void Write()
+        private void Unpack()
         {
             string numberFiller = "";
             if (number < 10) numberFiller = "0" + numberFiller;
