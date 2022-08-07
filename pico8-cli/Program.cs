@@ -413,18 +413,21 @@ __sfx__
         }
 
         private static bool UnPack() {
-            if (Directory.Exists("lua") & !Setup.properties["override"])
+            if (Directory.Exists("lua"))
             {
-                Util.Info("The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'");
-                return false;
-            }
+                if (!Setup.properties["override"])
+                {
+                    Util.Info("The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'");
+                    return false;
+                }                
 
-            //clear lua folder
-            DirectoryInfo di = new DirectoryInfo("lua");
+                //clear lua folder
+                DirectoryInfo di = new DirectoryInfo("lua");
 
-            foreach (FileInfo file in di.GetFiles())
-            {
-                file.Delete();
+                foreach (FileInfo file in di.GetFiles())
+                {
+                    file.Delete();
+                }
             }
 
             string fileToUnpack = Util.GetGameName() + ".p8";
