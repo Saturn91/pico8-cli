@@ -174,6 +174,7 @@ __end_tabs
                 case Program.RUN_OPTIONS.run:
                     Pack();
                     Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -run " + Util.GetGameName() + ".p8");
+                    succeded = true;
                     break;
             }
 
@@ -371,19 +372,19 @@ __sfx__
                 case Program.RUN_OPTIONS.unpack:
                     for(int i = 0; i < configFileLines.Length; i++)
                     {
-                        if (configFileLines[i].Contains("last unpacked:")) configFileLines[i] = "last unpacked: " + DateTime.Now.ToString();
+                        if (configFileLines[i].StartsWith("last unpacked:")) configFileLines[i] = "last unpacked: " + DateTime.Now.ToString();
                     }
                     break;
                 case Program.RUN_OPTIONS.pack:
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
-                        if (configFileLines[i].Contains("last packed:")) configFileLines[i] = "last packed: " + DateTime.Now.ToString();
+                        if (configFileLines[i].StartsWith("last packed:")) configFileLines[i] = "last packed: " + DateTime.Now.ToString();
                     }
                     break;
                 case Program.RUN_OPTIONS.run:
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
-                        if (configFileLines[i].Contains("last run:")) configFileLines[i] = "last run: " + DateTime.Now.ToString();
+                        if (configFileLines[i].StartsWith("last run:")) configFileLines[i] = "last run: " + DateTime.Now.ToString();
                     }
                     break;
             }
