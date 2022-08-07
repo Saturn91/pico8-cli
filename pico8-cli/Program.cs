@@ -290,31 +290,31 @@ __sfx__
         }
     }
 
-    class Unpack
+    class Tab
     {
-        private class Tab
+        private string name;
+        private string[] content;
+
+        public Tab(string name)
         {
-            private string name;
-            private string[] content;
-
-            public Tab(string name)
-            {
-                this.name = name;
-            }
-
-            public void SetContent(string[] codeLines)
-            {
-                content = codeLines;
-                Write();
-            }
-
-            private void Write()
-            {
-                Directory.CreateDirectory("lua");
-                File.WriteAllLinesAsync("lua/" + name + ".lua", content);
-            }
+            this.name = name;
         }
 
+        public void SetContent(string[] codeLines)
+        {
+            content = codeLines;
+            Write();
+        }
+
+        private void Write()
+        {
+            Directory.CreateDirectory("lua");
+            File.WriteAllLinesAsync("lua/" + name + ".lua", content);
+        }
+    }
+
+    class Unpack
+    {
         public static void Lua(string[] fileLines)
         {
             bool inLuaSection = false;
