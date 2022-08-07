@@ -284,6 +284,15 @@ __sfx__
 
             string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
+            //create backup
+            Directory.CreateDirectory(".backups");
+            string datePrefix = DateTime.Now.ToString()
+                .Replace(".", "")
+                .Replace(" ", "")
+                .Replace(":", "") + "_";
+            File.WriteAllLines(".backups/"+ datePrefix + Util.GetGameName() + ".p8", lines);
+
+            //actual unpack
             Unpack.Lua(lines);
 
             return true;
