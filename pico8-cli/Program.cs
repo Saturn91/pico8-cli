@@ -236,8 +236,8 @@ __gfx__
 __sfx__
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ";
-                File.WriteAllTextAsync(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
-                return true;
+                File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.ToString());
+                return UnPack();
             }
 
             Util.Error(Util.GetGameName() + " is already initialized");
@@ -345,7 +345,7 @@ __sfx__
         private void Write()
         {
             Directory.CreateDirectory("lua");
-            File.WriteAllLinesAsync("lua/" + name + ".lua", content);
+            File.WriteAllLines("lua/" + name + ".lua", content);
         }
     }
 
