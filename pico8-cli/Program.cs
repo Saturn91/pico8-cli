@@ -180,14 +180,14 @@ __end_tabs
 
             if (succeded)
             {
-                UpdateConfigFile(mode);
+                UpdateProjectConfigFile(mode);
                 EndLog();
             }
         }
 
         private static bool Init()
         {
-            if (!File.Exists(Program.CONFIG_FILE_PATH))
+            if (!File.Exists(Program.PROJECT_CONFIG_FILE_PATH))
             {
                 Directory.CreateDirectory(".pico8-cli");
                 string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
@@ -282,7 +282,7 @@ __sfx__
                 {
                     Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
                 }
-                UpdateConfigFile(Program.RUN_OPTIONS.init);
+                UpdateProjectConfigFile(Program.RUN_OPTIONS.init);
                 return UnPack();
             }
 
@@ -292,7 +292,7 @@ __sfx__
 
         private static bool Pack() {
             // 1. get all tabs from config file
-            string[] configLines = File.ReadAllLines(Program.CONFIG_FILE_PATH);
+            string[] configLines = File.ReadAllLines(Program.PROJECT_CONFIG_FILE_PATH);
             List<string> tabFiles = new List<string>();
 
             bool inTabsArea = false;
@@ -349,10 +349,10 @@ __sfx__
             return true;
         }
 
-        private static void UpdateConfigFile(Program.RUN_OPTIONS mode)
+        private static void UpdateProjectConfigFile(Program.RUN_OPTIONS mode)
         {
 
-            string configFile = Program.CONFIG_FILE_PATH;
+            string configFile = Program.PROJECT_CONFIG_FILE_PATH;
             string[] configFileLines;
 
             if (!File.Exists(configFile))
@@ -468,7 +468,7 @@ __sfx__
 
         public static void UpdateConfig()
         {
-            List<string> configLines = new List<string>(File.ReadAllLines(Program.CONFIG_FILE_PATH));
+            List<string> configLines = new List<string>(File.ReadAllLines(Program.PROJECT_CONFIG_FILE_PATH));
             List<string> newConfigLines = new List<string>();
             for(int i = 0; i < configLines.Count; i++)
             {
@@ -486,7 +486,7 @@ __sfx__
 
             newConfigLines.Add("__end_tabs");
 
-            File.WriteAllLines(Program.CONFIG_FILE_PATH, newConfigLines.ToArray());
+            File.WriteAllLines(Program.PROJECT_CONFIG_FILE_PATH, newConfigLines.ToArray());
         }
 
         private string name;
@@ -594,7 +594,7 @@ __sfx__
         public enum RUN_OPTIONS { init, unpack, pack, run };
         public static readonly string[] RUN_OPTIONS_STRINGS = Enum.GetNames(typeof(RUN_OPTIONS));
         public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
-        public static readonly string CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
+        public static readonly string PROJECT_CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
 
         static void LogInstallAndLocationInfos()
         {
