@@ -9,61 +9,71 @@ namespace pico8_cli
 {
     class GlobalSettings
     {
+        public enum Values
+        {
+            localRunCommand,
+            pico8Version
+        }
+
         public string localRunCommand { get; private set; }
         public string pico8Version { get; private set; }
 
-        public static GlobalSettings EmptySettings()
+        public static Dictionary<Values, string> EmptySettings()
         {
-            return new GlobalSettings("unset", "unset");
-        }
-
-        public static GlobalSettings LoadFromFile()
-        {
-            Util.Debug("global settings loaded");
-            string[] loadedLines = File.ReadAllLines(Program.GLOBAL_CONFIG_FILE_PATH);
-            string localRunCommand = "";
-            string pico8Version = "";
-            foreach (string line in loadedLines)
+            Dictionary<Values, string> values = new Dictionary<Values, string>();
+            foreach (Values value in Enum.GetValues(typeof(Values)))
             {
-                string loadedLocalRunCommand = Util.GetPropertyFromLine(line, "localRunCommand:");
-                if (loadedLocalRunCommand != null) localRunCommand = loadedLocalRunCommand;
-
-                string loadedpico8Version = Util.GetPropertyFromLine(line, "pico8Version:");
-                if (loadedpico8Version != null) pico8Version = loadedpico8Version;
+                values.Add(value, "");
             }
 
-            return new GlobalSettings(localRunCommand, pico8Version);
+            return values;
         }
 
-        public GlobalSettings(string localRunCommand, string pico8Version)
+        public static Dictionary<GlobalSettings.Values, string> LoadFromFile()
         {
-            this.localRunCommand = localRunCommand;
-            this.pico8Version = pico8Version;
+            
+            string[] loadedLines = File.ReadAllLines(Program.GLOBAL_CONFIG_FILE_PATH);
+            Dictionary<Values, string> loadedValues = EmptySettings();
+
+            foreach (string line in loadedLines)
+            {
+                foreach(Values value in Enum.GetValues(typeof(Values)))
+                {
+                    
+                    string loadedValue = Util.GetPropertyFromLine(line, value.ToString() + ":");
+                    if (loadedValue != null) loadedValues[value] = loadedValue;
+                }
+            }
+
+            Util.Debug("global settings loaded");
+            return loadedValues;
         }
 
-        public void SaveToFile()
+        private static void SaveToFile(Dictionary<Values, string> values)
         {
-            string[] configStrings = {
-                    "localRunCommand: " + this.localRunCommand,
-                    "pico8Version: " + this.pico8Version,
-            };
+            List<string> globalSettingsAsStringList = new List<string>();
 
-            File.WriteAllLines(Program.GLOBAL_CONFIG_FILE_PATH, configStrings);
+            foreach (Values value in Enum.GetValues(typeof(Values)))
+            {
+                globalSettingsAsStringList.Add(value.ToString() + ": " + values[value]);
+            }
+
+            File.WriteAllLines(Program.GLOBAL_CONFIG_FILE_PATH, globalSettingsAsStringList.ToArray());
             Util.Debug("create/override global config");
         }
 
-        internal static GlobalSettings Init()
+        public static Dictionary<Values, string> Init()
         {
-            GlobalSettings initialSettings = EmptySettings();
-            string pico8Version = "version 36";
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) initialSettings = new GlobalSettings("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -run ", pico8Version);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) initialSettings = new GlobalSettings("/opt/pico-8 - run ", pico8Version);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) initialSettings = new GlobalSettings("/opt/pico-8 - run ", pico8Version);
+            Dictionary<Values, string> initialValues = EmptySettings();
+            initialValues[Values.pico8Version] = "version 36";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) initialValues[Values.localRunCommand] = "\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -run ";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) initialValues[Values.localRunCommand] = "/opt/pico-8 - run ";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) initialValues[Values.localRunCommand] = "opt/pico-8 - run ";
 
             Util.Debug("initialy creating global config file");
-            initialSettings.SaveToFile();
+            SaveToFile(initialValues);
 
-            return initialSettings;
+            return initialValues;
         }
     }
 
@@ -74,7 +84,6 @@ namespace pico8_cli
             { "debug", false },
             { "override", false }
         };
-
 
         public static void HandleArgs(string[] args)
         {
@@ -99,7 +108,7 @@ namespace pico8_cli
             return Environment.CurrentDirectory;
         }
 
-        public static GlobalSettings GetGlobalSettings()
+        public static Dictionary<GlobalSettings.Values, string> GetGlobalSettings()
         {
             return File.Exists(Program.GLOBAL_CONFIG_FILE_PATH) ? GlobalSettings.LoadFromFile() : GlobalSettings.Init();
         }
@@ -161,7 +170,7 @@ namespace pico8_cli
         {
             if (line.StartsWith(property))
             {
-                return line.Substring(line.IndexOf(":") + 1);
+                return line.Substring(line.IndexOf(":") + 2);
             }
 
             return null;
@@ -249,7 +258,7 @@ __end_tabs
                     break;
                 case Program.RUN_OPTIONS.run:
                     Pack();
-                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS.localRunCommand + Util.GetGameName() + ".p8");
+                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + Util.GetGameName() + ".p8");
                     succeded = true;
                     break;
             }
@@ -353,7 +362,7 @@ __sfx__
 ";
                 if (!File.Exists(Util.GetGameName() + ".p8"))
                 {
-                    File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.Replace("#VERSION", Program.GLOBAL_SETTINGS.pico8Version).ToString());
+                    File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.Replace("#VERSION", Program.GLOBAL_SETTINGS[GlobalSettings.Values.pico8Version]).ToString());
                 } else
                 {
                     Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
@@ -672,7 +681,8 @@ __sfx__
         public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
         public static readonly string PROJECT_CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
         public static readonly string GLOBAL_CONFIG_FILE_PATH = INSTALLATION_PATH + "/pico8-cli.config";
-        public static readonly GlobalSettings GLOBAL_SETTINGS = Setup.GetGlobalSettings();
+
+        public static Dictionary<GlobalSettings.Values, string> GLOBAL_SETTINGS = Setup.GetGlobalSettings();
 
         static void LogInstallAndLocationInfos()
         {
