@@ -58,8 +58,16 @@ namespace pico8_cli
                 globalSettingsAsStringList.Add(value.ToString() + ": " + values[value]);
             }
 
-            File.WriteAllLines(Program.GLOBAL_CONFIG_FILE_PATH, globalSettingsAsStringList.ToArray());
-            Util.Debug("create/override global config");
+
+            try
+            {
+                File.WriteAllLines(Program.GLOBAL_CONFIG_FILE_PATH, globalSettingsAsStringList.ToArray());
+                Util.Debug("create/override global config");
+            } catch(Exception e)
+            {
+                Util.Debug("not able to create config file: " + Program.GLOBAL_CONFIG_FILE_PATH + " please retry in a terminal with administrator right, or create the file manually");
+            }
+            
         }
 
         public static Dictionary<Values, string> Init()
@@ -72,6 +80,7 @@ namespace pico8_cli
 
             Util.Debug("initialy creating global config file");
             SaveToFile(initialValues);
+            
 
             return initialValues;
         }
