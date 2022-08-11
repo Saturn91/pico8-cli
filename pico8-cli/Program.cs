@@ -131,6 +131,16 @@ namespace pico8_cli
             Array.Copy(array, offset, result, 0, end - offset);
             return result;
         }
+
+        public static bool Contains<T>(this T[] array, T value)
+        {
+            foreach(T entry in array)
+            {
+                if (entry.Equals(value)) return true;
+            }
+
+            return false;
+        }
     }
 
     class Util
@@ -561,10 +571,19 @@ __sfx__
         public int firstLine { get; }
         public int lastLine { get; }
 
+        public string[] lines { get; }
+
         public UnpackInfo(int firstLine, int lastLine)
         {
             this.firstLine = firstLine;
             this.lastLine = lastLine;
+        }
+
+        public UnpackInfo(int firstLine, int lastLine, string[] lines)
+        {
+            this.firstLine = firstLine;
+            this.lastLine = lastLine;
+            this.lines = lines;
         }
     }
 
@@ -572,54 +591,41 @@ __sfx__
     {
         public static UnpackInfo Unpack(string[] fileLines)
         {
-            bool inLuaSection = false;
-            int firstLuaLine = -1;
-            int lastluaLine = -1;
+            //get lua lines
+            UnpackInfo luaUnpacked = Pico8DataTagExtractor.GetFileLinesOfTag("__lua__", fileLines);
 
             int tabCounter = 1;
             Tab actualTab = new Tab("main", tabCounter);
             List<string> currentTabContent = new List<string>();
 
-            for (int i = 0; i < fileLines.Length; i++)
+            for (int i = 0; i < luaUnpacked.lines.Length; i++)
             {
-                string line = fileLines[i];
-                if (! inLuaSection )
+                string line = luaUnpacked.lines[i];
+
+                //create new Tab
+                if (line == "-->8")
                 {
-                    if (line == "__lua__")
-                    {
-                        inLuaSection = true;
-                        firstLuaLine = i + 1;
-                    }
-                } else if (inLuaSection)
-                {
-                    //create new Tab
-                    if (line == "-->8")
-                    {
-                        actualTab.SetContent(currentTabContent.ToArray());
-                        currentTabContent.Clear();
+                    actualTab.SetContent(currentTabContent.ToArray());
+                    currentTabContent.Clear();
 
-                        tabCounter += 1;
+                    tabCounter += 1;
 
-                        string tabName = "tab";
+                    string tabName = "tab";
 
-                        string nextLine = fileLines[i + 1];
-                        if (nextLine.StartsWith("--") && nextLine.Length > 2) tabName = nextLine.Substring(2);
+                    string nextLine = luaUnpacked.lines[i + 1];
+                    if (nextLine.StartsWith("--") && nextLine.Length > 2) tabName = nextLine.Substring(2);
 
-                        actualTab = new Tab(tabName, tabCounter);
-                    }
-                    // other tag reached no longer within lua code
-                    else if (Array.IndexOf(Pico8.P8_TAGS, line) != -1) {
-                        lastluaLine = i - 1;
-                        break;
-                    } else {
-                        currentTabContent.Add(line);
-                    }                
+                    actualTab = new Tab(tabName, tabCounter);
                 }
+                else
+                {
+                    currentTabContent.Add(line);
+                }                              
             }
 
             actualTab.SetContent(currentTabContent.ToArray());
 
-            return new UnpackInfo(firstLuaLine, lastluaLine);
+            return luaUnpacked;
         }
 
         public static bool Pack()
@@ -663,6 +669,50 @@ __sfx__
             File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
 
             return true;
+        }
+    }
+
+    class Pico8DataTagExtractor
+    {
+        public static UnpackInfo GetFileLinesOfTag(string tag, string[] fileLines)
+        {
+            bool withinTag = false;
+            List<string> contentLines = new List<string>();
+            int firstLine = -1;
+            int lastLine = -1;
+
+            for(int i = 0; i < fileLines.Length; i++)
+            {
+                string line = fileLines[i];
+
+                if (line == tag)
+                {
+                    firstLine = i;
+                    withinTag = true;
+                } else if (withinTag)
+                {
+                    if (Pico8.P8_TAGS.Contains(line))
+                    {
+                        lastLine = i;
+                        break;
+                    }
+                    contentLines.Add(line);
+                }
+            }
+
+            if (contentLines.Count <= 0) return null;
+
+            return new UnpackInfo(firstLine, lastLine, contentLines.ToArray());
+        }
+
+        public static bool Pack()
+        {
+            return false;
+        }
+
+        public static UnpackInfo UnPack()
+        {
+            return new UnpackInfo(0, 0);
         }
     }
 
