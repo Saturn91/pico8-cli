@@ -225,9 +225,6 @@ namespace pico8_cli
 last unpacked: #UNPACKED_DATE
 last packed: never
 last run: never
-
-__Lua tabs:
-__end_tabs
 ";
 
         public static readonly string[] P8_TAGS =
@@ -418,62 +415,7 @@ __sfx__
         }
 
         private static bool Pack() {
-            // 1. get all tabs from config file
-            string[] configLines = File.ReadAllLines(Program.PROJECT_CONFIG_FILE_PATH);
-            List<string> tabFiles = new List<string>();
-
-            bool inTabsArea = false;
-            for(int i = 0; i < configLines.Length; i++)
-            {
-                string line = configLines[i];
-                if (!inTabsArea && line == "__Lua tabs:")
-                {
-                    inTabsArea = true;
-                } else if (line == "__end_tabs")
-                {
-                    break;
-                } else if (inTabsArea)
-                {
-                    tabFiles.Add("lua/" + line + ".lua");
-                }
-            }
-
-            // 2. for each tab insert the lines into the original .p8 file
-            List<string> luaLines = new List<string>();
-            for (int i = 0; i < tabFiles.Count; i++)
-            {
-                string tab = tabFiles[i];
-
-                string[] lines = File.ReadAllLines(tab);
-                luaLines.AddRange(lines);
-                if (i < tabFiles.Count -1)
-                {
-                    luaLines.Add("-->8");
-                }
-            }
-
-            // 3. create backup of the original file (with before_pack)
-            CreateBackupOfPico8File("before_pack");
-
-            // 4. override file
-            List<string> packedPico8Lines = new List<string>();
-            List<string> restOfFileLines = new List<string>(File.ReadAllLines(Program.REST_OF_FILE_PATH));
-
-            foreach(string line in restOfFileLines)
-            {
-                if (line == "__UNPACKED")
-                {
-                    packedPico8Lines.Add("__lua__");
-                    packedPico8Lines.AddRange(luaLines);
-                } else
-                {
-                    packedPico8Lines.Add(line);
-                }
-            }
-
-            File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
-
-            return true;
+            return Lua.Pack();
         }
 
         private static void UpdateProjectConfigFile(Program.RUN_OPTIONS mode)
@@ -519,7 +461,7 @@ __sfx__
             File.WriteAllLines(configFile, configFileLines);
         }
 
-        private static void CreateBackupOfPico8File(string prefix)
+        public static void CreateBackupOfPico8File(string prefix)
         {
             // if there is no already packed file skip this part
             try
@@ -575,7 +517,7 @@ __sfx__
             CreateBackupOfPico8File("before_unpack");
 
             //actual unpack
-            Unpack.UnpackInfo info = Unpack.Lua(lines);
+            UnpackInfo info = Lua.Unpack(lines);
 
             string[] before = lines.SubArray(0, info.firstLine - 1);
             string[] after = lines.SubArray(info.lastLine + 1, lines.Length);
@@ -587,40 +529,6 @@ __sfx__
 
     class Tab
     {
-        public static List<string> currentTabs;
-        public static void InitTabs()
-        {
-            currentTabs = new List<string>();
-        }
-
-        public static void AddTab(string tab)
-        {
-            currentTabs.Add(tab);
-        }
-
-        public static void UpdateConfig()
-        {
-            List<string> configLines = new List<string>(File.ReadAllLines(Program.PROJECT_CONFIG_FILE_PATH));
-            List<string> newConfigLines = new List<string>();
-            for(int i = 0; i < configLines.Count; i++)
-            {
-                string line = configLines[i];
-                newConfigLines.Add(line);
-                if(configLines[i] == "__Lua tabs:")
-                {
-                    for(int j = 0; j < currentTabs.Count; j++)
-                    {
-                        newConfigLines.Add(currentTabs[j]);
-                    }
-                    break;
-                }
-            }
-
-            newConfigLines.Add("__end_tabs");
-
-            File.WriteAllLines(Program.PROJECT_CONFIG_FILE_PATH, newConfigLines.ToArray());
-        }
-
         private string name;
         private string[] content;
         private int number;
@@ -645,31 +553,29 @@ __sfx__
             Directory.CreateDirectory("lua");
             string numberedTabName = tabNumberString + "_" + name;
             File.WriteAllLines("lua/" + numberedTabName + ".lua", content);
-            AddTab(numberedTabName);
         }
     }
 
-    class Unpack
+    public class UnpackInfo
     {
-        public class UnpackInfo
+        public int firstLine { get; }
+        public int lastLine { get; }
+
+        public UnpackInfo(int firstLine, int lastLine)
         {
-            public int firstLine { get; }
-            public int lastLine { get; }
-
-            public UnpackInfo(int firstLine, int lastLine)
-            {
-                this.firstLine = firstLine;
-                this.lastLine = lastLine;
-            }
+            this.firstLine = firstLine;
+            this.lastLine = lastLine;
         }
+    }
 
-        public static UnpackInfo Lua(string[] fileLines)
+    class Lua
+    {
+        public static UnpackInfo Unpack(string[] fileLines)
         {
             bool inLuaSection = false;
             int firstLuaLine = -1;
             int lastluaLine = -1;
 
-            Tab.InitTabs();
             int tabCounter = 1;
             Tab actualTab = new Tab("main", tabCounter);
             List<string> currentTabContent = new List<string>();
@@ -712,9 +618,51 @@ __sfx__
             }
 
             actualTab.SetContent(currentTabContent.ToArray());
-            Tab.UpdateConfig();
 
             return new UnpackInfo(firstLuaLine, lastluaLine);
+        }
+
+        public static bool Pack()
+        {
+            string[] tabFiles = Directory.GetFiles("lua");
+
+            // 2. for each tab insert the lines into the original .p8 file
+            List<string> luaLines = new List<string>();
+            for (int i = 0; i < tabFiles.Length; i++)
+            {
+                string tab = tabFiles[i];
+
+                string[] lines = File.ReadAllLines(tab);
+                luaLines.AddRange(lines);
+                if (i < tabFiles.Length - 1)
+                {
+                    luaLines.Add("-->8");
+                }
+            }
+
+            // 3. create backup of the original file (with before_pack)
+            Pico8.CreateBackupOfPico8File("before_pack");
+
+            // 4. override file
+            List<string> packedPico8Lines = new List<string>();
+            List<string> restOfFileLines = new List<string>(File.ReadAllLines(Program.REST_OF_FILE_PATH));
+
+            foreach (string line in restOfFileLines)
+            {
+                if (line == "__UNPACKED")
+                {
+                    packedPico8Lines.Add("__lua__");
+                    packedPico8Lines.AddRange(luaLines);
+                }
+                else
+                {
+                    packedPico8Lines.Add(line);
+                }
+            }
+
+            File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
+
+            return true;
         }
     }
 
