@@ -394,13 +394,18 @@ __sfx__
             return false;
         }
 
-        private static void InitializeGitIgnore()
+        private static void InitializeGitRepository()
         {
             string[] gitignore =
             {
-                ".pico8-cli/*",
-                Util.GetGameName() + ".8"
+                ".pico8-cli",
+                Util.GetGameName() + ".p8"
             };
+
+            try
+            {
+                Util.ExecuteCommandSync("git init");
+            } catch { }
 
             if (!File.Exists(".gitignore"))
             {
@@ -420,12 +425,45 @@ __sfx__
 
         private static bool Init()
         {
-            InitializeGitIgnore();
+            InitializeGitRepository();
             return InitializePico8CliProject();
         }
 
         private static bool Pack() {
-            return Lua.Pack();
+            // 1. create backup of the original file (with before_pack)
+            CreateBackupOfPico8File("before_pack");
+
+            //2. extract lua and other resource files
+            List<string> projectContent = new List<string>();
+            foreach(string pico8Tag in P8_TAGS)
+            {
+                string[] linesToAdd = pico8Tag == "__lua__" ? Lua.Pack() : Pico8DataTagExtractor.ExtractTagResourceFile(pico8Tag);
+                if (linesToAdd.Length > 0)
+                {
+                    projectContent.AddRange(linesToAdd);
+                }
+                
+            }
+
+            // 3. override file
+            List<string> packedPico8Lines = new List<string>();
+            List<string> restOfFileLines = new List<string>(File.ReadAllLines(Program.REST_OF_FILE_PATH));
+
+            foreach (string line in restOfFileLines)
+            {
+                if (line == "__UNPACKED")
+                {
+                    packedPico8Lines.AddRange(projectContent);
+                }
+                else
+                {
+                    packedPico8Lines.Add(line);
+                }
+            }
+
+            File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
+
+            return true;
         }
 
         private static void UpdateProjectConfigFile(Program.RUN_OPTIONS mode)
@@ -493,12 +531,16 @@ __sfx__
             List<string> lines = new List<string>(linesBefore);
             lines.Add("__UNPACKED");
             lines.AddRange(linesAfter);
+            foreach(string line in linesAfter)
+            {
+                Util.Debug(line);
+            }
             Directory.CreateDirectory("meta");
             File.WriteAllLines(Program.REST_OF_FILE_PATH, lines);
         }
 
         private static bool UnPack() {
-            if (Directory.Exists("lua"))
+            if (Directory.Exists("lua") || Directory.Exists(Program.RESOURCE_FOLDER))
             {
                 if (!Setup.properties["override"])
                 {
@@ -506,12 +548,26 @@ __sfx__
                     return false;
                 }                
 
-                //clear lua folder
-                DirectoryInfo di = new DirectoryInfo("lua");
-
-                foreach (FileInfo file in di.GetFiles())
+                if (Directory.Exists("lua"))
                 {
-                    file.Delete();
+                    //clear lua folder
+                    DirectoryInfo di = new DirectoryInfo("lua");
+
+                    foreach (FileInfo file in di.GetFiles())
+                    {
+                        file.Delete();
+                    }
+                }
+                
+                if (Directory.Exists(Program.RESOURCE_FOLDER))
+                {
+                    //clear lua folder
+                    DirectoryInfo di = new DirectoryInfo(Program.RESOURCE_FOLDER);
+
+                    foreach (FileInfo file in di.GetFiles())
+                    {
+                        file.Delete();
+                    }
                 }
             }
 
@@ -526,11 +582,30 @@ __sfx__
 
             CreateBackupOfPico8File("before_unpack");
 
-            //actual unpack
-            UnpackInfo info = Lua.Unpack(lines);
+            int lineBeginning = Int32.MaxValue;
+            int lineEnd = -1;
 
-            string[] before = lines.SubArray(0, info.firstLine - 1);
-            string[] after = lines.SubArray(info.lastLine + 1, lines.Length);
+            //actual unpack
+            foreach(string tag in P8_TAGS)
+            {
+                UnpackInfo info;
+                if (tag == "__lua__")
+                {
+                    info = Lua.Unpack(lines);
+                } else
+                {
+                    info = Pico8DataTagExtractor.UnPack(tag, lines);
+                }
+
+                if (info != null)
+                {
+                    if (info.firstLine < lineBeginning) lineBeginning = info.firstLine;
+                    if (info.lastLine >= lineEnd) lineEnd = info.lastLine;
+                }           
+            }
+
+            string[] before = lines.SubArray(0, lineBeginning);
+            string[] after = lines.SubArray(lineEnd + 1, lines.Length);
             CreateRestFileContent(before, after);
 
             return true;
@@ -628,12 +703,13 @@ __sfx__
             return luaUnpacked;
         }
 
-        public static bool Pack()
+        public static string[] Pack()
         {
             string[] tabFiles = Directory.GetFiles("lua");
 
             // 2. for each tab insert the lines into the original .p8 file
             List<string> luaLines = new List<string>();
+            luaLines.Add("__lua__");
             for (int i = 0; i < tabFiles.Length; i++)
             {
                 string tab = tabFiles[i];
@@ -646,29 +722,7 @@ __sfx__
                 }
             }
 
-            // 3. create backup of the original file (with before_pack)
-            Pico8.CreateBackupOfPico8File("before_pack");
-
-            // 4. override file
-            List<string> packedPico8Lines = new List<string>();
-            List<string> restOfFileLines = new List<string>(File.ReadAllLines(Program.REST_OF_FILE_PATH));
-
-            foreach (string line in restOfFileLines)
-            {
-                if (line == "__UNPACKED")
-                {
-                    packedPico8Lines.Add("__lua__");
-                    packedPico8Lines.AddRange(luaLines);
-                }
-                else
-                {
-                    packedPico8Lines.Add(line);
-                }
-            }
-
-            File.WriteAllLines(Util.GetGameName() + ".p8", packedPico8Lines);
-
-            return true;
+            return luaLines.ToArray();
         }
     }
 
@@ -698,6 +752,8 @@ __sfx__
                     }
                     contentLines.Add(line);
                 }
+
+                lastLine = fileLines.Length - 1;
             }
 
             if (contentLines.Count <= 0) return null;
@@ -705,14 +761,33 @@ __sfx__
             return new UnpackInfo(firstLine, lastLine, contentLines.ToArray());
         }
 
-        public static bool Pack()
+        public static string[] ExtractTagResourceFile(string tag)
         {
-            return false;
+            string filePath = Program.RESOURCE_FOLDER + "/" + tag + ".txt";
+
+            List<string> tagContentLines = new List<string>();
+            if (!File.Exists(filePath)) return new string[0];
+
+            tagContentLines.Add(tag);
+            tagContentLines.AddRange(File.ReadAllLines(filePath));
+
+            return tagContentLines.ToArray();
         }
 
-        public static UnpackInfo UnPack()
+        public static UnpackInfo UnPack(string tag, string[] fileLines)
+        {            
+            UnpackInfo unpackInfo = GetFileLinesOfTag(tag, fileLines);
+            if (unpackInfo != null)
+            {
+                UnpackTagContentIntoResourceFile(tag, unpackInfo.lines);
+            }
+            return unpackInfo;
+        }
+
+        public static void UnpackTagContentIntoResourceFile(string tag, string[] content)
         {
-            return new UnpackInfo(0, 0);
+            Directory.CreateDirectory(Program.RESOURCE_FOLDER);
+            File.WriteAllLines(Program.RESOURCE_FOLDER + "/" + tag + ".txt", content);
         }
     }
 
@@ -727,6 +802,7 @@ __sfx__
         public static readonly string PROJECT_CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
         public static readonly string REST_OF_FILE_PATH = "meta/" + "restOfFile.p8";
         public static readonly string GLOBAL_CONFIG_FILE_PATH = INSTALLATION_PATH + "/pico8-cli.config";
+        public const string RESOURCE_FOLDER = "resources";
 
         public static Dictionary<GlobalSettings.Values, string> GLOBAL_SETTINGS = Setup.GetGlobalSettings();
 
