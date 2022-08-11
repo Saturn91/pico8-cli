@@ -57,12 +57,16 @@ C:\Users\saturn91\Desktop\saturn91-dungeon-crawler>pico8-cli init
 saturn91-dungeon-crawler
 |-.pico8-cli                              <- eventually hidden as it has a dot (you do not need it most of the time)
 |   |-backups                             <- each pack / unpack will generate a packup of the `saturn91-dungeon-crawler.p8` file here
-|   |-restOfFile.p8                       <- holds all Data which is not lua (I advise not to mess with this file manually)
 |   |-saturn91-dungeon-crawler.p8.config  <- holds some information and data how to pack / unpack the file
 |-lua                                     <- work with the lua files included here
-|   |-01_main.lua                         <- tab 1/16 is always called main
-|   |-02_my_other_tab                     <- seccond tab which has a --my_other_tab comment on top                     
-|-saturn91-dungeon-crawler.p8             <- the runnable pico8 from which all tabs file where extracted into the lua folder
+|   |-01_main.lua                         <- tab 1 of pico8 project        
+|-meta
+|   |-restOfFile.p8                       <- this file holds the header which each pico8 file has, just ignore it
+|-resources                               <- all other data then lua code will be stored within this folder
+|   |-__gfx__.txt                         <- sprite data
+|-saturn91-dungeon-crawler.p8             <- the runnable pico8 from which all tabs file where extracted from into the lua folder
+|-.gitignore                              <- initialized gitignore
+|-README.md                               <- initialized README
 ```
 4. now your project is setup correctly
 
