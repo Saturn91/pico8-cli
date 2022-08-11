@@ -279,7 +279,7 @@ __end_tabs
             }
         }
 
-        private static bool Init()
+        private static bool InitializePico8CliProject()
         {
             if (!File.Exists(Program.PROJECT_CONFIG_FILE_PATH))
             {
@@ -369,10 +369,13 @@ __gfx__
 __sfx__
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ";
+
+
                 if (!File.Exists(Util.GetGameName() + ".p8"))
                 {
                     File.WriteAllText(Util.GetGameName() + ".p8", empty_pico8_project.Replace("#VERSION", Program.GLOBAL_SETTINGS[GlobalSettings.Values.pico8Version]).ToString());
-                } else
+                }
+                else
                 {
                     Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
                 }
@@ -382,6 +385,36 @@ __sfx__
 
             Util.Error(Util.GetGameName() + " is already initialized");
             return false;
+        }
+
+        private static void InitializeGitIgnore()
+        {
+            string[] gitignore =
+            {
+                ".pico8-cli/*",
+                Util.GetGameName() + ".8"
+            };
+
+            if (!File.Exists(".gitignore"))
+            {
+                File.WriteAllLines(".gitignore", gitignore);
+            } else
+            {
+                List<string> gitignoreLinesAlreadyLoaded = new List<string>(File.ReadAllLines(".gitignore"));
+
+                foreach(string lineToAdd in gitignore)
+                {
+                    if (!gitignoreLinesAlreadyLoaded.Contains(lineToAdd)) gitignoreLinesAlreadyLoaded.Add(lineToAdd);
+                }
+
+                File.WriteAllLines(".gitignore", gitignoreLinesAlreadyLoaded.ToArray());
+            }
+        }
+
+        private static bool Init()
+        {
+            InitializeGitIgnore();
+            return InitializePico8CliProject();
         }
 
         private static bool Pack() {
@@ -424,7 +457,7 @@ __sfx__
 
             // 4. override file
             List<string> packedPico8Lines = new List<string>();
-            List<string> restOfFileLines = new List<string>(File.ReadAllLines("." + Program.PRG_NAME + "/" + "restOfFile.p8"));
+            List<string> restOfFileLines = new List<string>(File.ReadAllLines(Program.REST_OF_FILE_PATH));
 
             foreach(string line in restOfFileLines)
             {
@@ -488,15 +521,19 @@ __sfx__
 
         private static void CreateBackupOfPico8File(string prefix)
         {
-            string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
+            // if there is no already packed file skip this part
+            try
+            {
+                string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
-            //create backup
-            Directory.CreateDirectory(".pico8-cli/backups");
-            string datePrefix = DateTime.Now.ToString()
-                .Replace(".", "")
-                .Replace(" ", "")
-                .Replace(":", "") + "_";
-            File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + "." + prefix + ".p8", lines);
+                //create backup
+                Directory.CreateDirectory(".pico8-cli/backups");
+                string datePrefix = DateTime.Now.ToString()
+                    .Replace(".", "")
+                    .Replace(" ", "")
+                    .Replace(":", "") + "_";
+                File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + "." + prefix + ".p8", lines);
+            } catch(Exception e) {}           
         }
 
         private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
@@ -504,7 +541,8 @@ __sfx__
             List<string> lines = new List<string>(linesBefore);
             lines.Add("__UNPACKED");
             lines.AddRange(linesAfter);
-            File.WriteAllLines(".pico8-cli/restOfFile.p8", lines);
+            Directory.CreateDirectory("meta");
+            File.WriteAllLines(Program.REST_OF_FILE_PATH, lines);
         }
 
         private static bool UnPack() {
@@ -689,6 +727,7 @@ __sfx__
         public static readonly string[] RUN_OPTIONS_STRINGS = Enum.GetNames(typeof(RUN_OPTIONS));
         public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
         public static readonly string PROJECT_CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
+        public static readonly string REST_OF_FILE_PATH = "meta/" + "restOfFile.p8";
         public static readonly string GLOBAL_CONFIG_FILE_PATH = INSTALLATION_PATH + "/pico8-cli.config";
 
         public static Dictionary<GlobalSettings.Values, string> GLOBAL_SETTINGS = Setup.GetGlobalSettings();
