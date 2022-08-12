@@ -25,6 +25,7 @@ To use the file globaly on your machine you need to install it manually.
 ```
 C:\Program Files (x86)\my_cmd_tools
   |-pico8-cli <-folder not zip!
+      |-pico8.cli.config
       |-pico8-cli.deps.json
       |-pico8-cli.dll
       |-pico8-cli.exe
