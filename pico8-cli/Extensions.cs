@@ -20,5 +20,23 @@ namespace pico8_cli
 
             return false;
         }
+
+        public static string Join<T>(this T[] array, string joiner)
+        {
+            string output = "";
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (i < array.Length - 1)
+                {
+                    output += array[i] + joiner;
+                }
+                else
+                {
+                    output += array[i];
+                }
+            }
+
+            return output;
+        }
     }
 }

@@ -55,6 +55,9 @@ last run: never
                     Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + Util.GetGameName() + ".p8");
                     succeded = true;
                     break;
+                case RUN_OPTIONS.test:
+                    UnitTest.RunTest();
+                    break;
             }
 
             if (succeded)

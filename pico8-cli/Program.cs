@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace pico8_cli
 {
-    public enum RUN_OPTIONS { init, unpack, pack, run };
+    public enum RUN_OPTIONS { init, unpack, pack, run, test };
 
     class Setup
     {

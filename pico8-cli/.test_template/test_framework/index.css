@@ -1,0 +1,59 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Silkscreen', cursive;
+    font-weight: bold;
+}
+
+body {
+    background-color: rgb(14, 26, 10);
+}
+
+.error-line {
+    color: rgb(255, 119, 0);
+}
+
+p {
+    font-size: 20px;
+    color: rgb(0, 255, 0);
+}
+
+.info-line {
+    color: rgb(0, 255, 0);
+}
+
+.cmd {
+    margin: 16px;
+    padding: 24px;
+    background-color: black;
+}
+
+h1 {
+    margin-left: 16px;
+    margin-top: 16px;
+    color: rgb(0, 255, 81)
+}
+
+.made-by {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    background-color: black;
+    color: rgb(0, 255, 0);
+    padding: 8px;
+}
+
+.made-by a {
+    color: rgb(122, 0, 112);
+}
+
+.controls {
+    margin: 16px;
+    font-size: 20px;
+    color: rgb(0, 255, 0);
+}
+
+.controls input {
+    height: 16px;
+    width: 16px;
+}
