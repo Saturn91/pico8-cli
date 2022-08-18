@@ -19,12 +19,13 @@ Before you can use you have to make sure that Pico8 is installed on your loacla 
 
 # Installation
 To use the file globaly on your machine you need to install it manually.
-1. download all the build files from the [latest release](https://github.com/Saturn91/pico8-cli/releases/tag/0.0.1)
+1. download all the build files from the [latest release](https://github.com/Saturn91/pico8-cli/releases/tag/0.0.2)
 2. unzip the provided 'pico8-cli.zip' somewhere in `C:\Program Files (x86)` i.e. in `C:\Program Files (x86)\my_cmd_tools`
 3. this gives you the following structure:
 ```
 C:\Program Files (x86)\my_cmd_tools
   |-pico8-cli <-folder not zip!
+      |-pico8.cli.config
       |-pico8-cli.deps.json
       |-pico8-cli.dll
       |-pico8-cli.exe
