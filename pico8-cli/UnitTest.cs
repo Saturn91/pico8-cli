@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace pico8_cli
 {
@@ -16,6 +17,75 @@ namespace pico8_cli
     class UnitTest
     {
         private static Dictionary<string, UnitTestFile> testFiles;
+
+        private static string SanitizeShortPico8Ifs(string line)
+        {
+            string lineWithoutSpaces = line.Replace(" ", "");
+            if (lineWithoutSpaces.Contains("if("))
+            {
+                int startIndex = line.IndexOf("(");
+                int endIndex = -1;
+
+                char[] lineAsChars = line.ToCharArray();
+                int openBrackets = 0;
+                for (int i = startIndex; i < line.Length; i++)
+                {
+                    if (lineAsChars[i] == '(') openBrackets += 1;
+                    if (lineAsChars[i] == ')') openBrackets -= 1;
+                    if (openBrackets == 0)
+                    {
+                        endIndex = i;
+                        break;
+                    }
+                }
+
+                if (endIndex != -1)
+                {
+                    lineAsChars[startIndex] = ' ';
+                    lineAsChars[endIndex] = ' ';
+                    line = new string(lineAsChars);
+                    string newLine = line.Substring(0, endIndex) + " then " + line.Substring(endIndex + 1) + " end";
+                    line = newLine;
+                }
+            }
+
+            return line;
+        }
+
+        private static string SanitizeShortPlusEquals(string line)
+        {
+            if (line.Contains("+="))
+            {
+                // get variable to Assign
+                string lineWithoutSpaces = line.Replace(" ", "");
+                int endOfVariableToAssign = lineWithoutSpaces.IndexOf("+=");
+                string variableToAssign = lineWithoutSpaces.Substring(0, endOfVariableToAssign);
+
+                int startIndex = line.IndexOf("+=");                
+
+                string newLine = variableToAssign + " = " + variableToAssign + " + " + line.Substring(startIndex + 2);
+                line = newLine;
+            }
+
+            return line;
+        }
+
+        // sanitize with "!=" -> "~=" and x+=1 -> x = x+1, if(x) y -> if x then y end
+        private static string SanitizePico8CodeLine(string line)
+        {
+            line = SanitizeShortPlusEquals(line);
+            line = SanitizeShortPico8Ifs(line);
+            line = line.Replace("!=", "~=");
+            return line;
+        }
+
+        
+        private static string[] ConvertPico8LuaLinesToLua(string[] luaLines)
+        {
+            for(int i=0; i < luaLines.Length; i++) luaLines[i] = SanitizePico8CodeLine(luaLines[i]);
+           
+            return luaLines;
+        }
 
         private static void AddTestFile(string name, UnitTestFile testFile)
         {
@@ -62,6 +132,8 @@ namespace pico8_cli
             {
                 if (testFiles[fileName].IsComplete)
                 {
+                    testFiles[fileName].sourceFileLines = ConvertPico8LuaLinesToLua(testFiles[fileName].sourceFileLines);
+                    testFiles[fileName].testFileLines = ConvertPico8LuaLinesToLua(testFiles[fileName].testFileLines);
                     testFileCounter++;
                 } else
                 {
@@ -69,17 +141,11 @@ namespace pico8_cli
                 }
             }
 
-            // 2. initialize empty index.html file
+            // 3. initialize empty index.html file
             string[] initial_index_html = File.ReadAllLines(".test/index.html");
-            List<string> index_html = new List<string>();
-
-
-            // 3. paste code to test into index.html file (and sanitize with "!=" -> "~=" and x=+1 -> x = x+1, if(x) y -> if x then y end
-            // TODO
+            List<string> index_html = new List<string>();          
 
             // 4. past test code into index.html
-
-
             for (int i = 0; i < initial_index_html.Length; i++)
             {
                 string nextLine = initial_index_html[i];
