@@ -16,6 +16,8 @@ namespace pico8_cli
 
     class UnitTest
     {
+        public static readonly string ORIGINAL_TEST_FOLDER_PATH = Program.INSTALLATION_PATH + "/test";
+        public static readonly string LOCAL_TEST_PATH = "test";
         private static Dictionary<string, UnitTestFile> testFiles;
 
         private static string SanitizeShortPico8Ifs(string line)
@@ -102,8 +104,19 @@ namespace pico8_cli
 
         public static void RunTest()
         {
+            RunTest(true);
+        }
+
+        public static void RunTest(bool showWarning)
+        {
             // 1. search for test.lua files in lua folder and break if none are found
             testFiles = new Dictionary<string, UnitTestFile>();
+
+            if(!Directory.Exists("lua"))
+            {
+                if(showWarning) Util.Error("Please verify that pico8-cli was started within a pico8-cli project, you can run pico8-cli init");
+                return;
+            }
 
             string[] luaFiles = Directory.GetFiles("lua");
             foreach(string luaFile in luaFiles)
@@ -141,8 +154,25 @@ namespace pico8_cli
                 }
             }
 
+            // 2. check if initial setup of the test framework has to be executed and if the files are at the installation folder
+            if (!Directory.Exists(ORIGINAL_TEST_FOLDER_PATH))
+            {
+                Util.Info("your installation is not set up for testing, directory '.test' does not exist on the instalation path");
+                return;
+            }
+
+
+            if (!Directory.Exists(LOCAL_TEST_PATH))
+            {
+                Directory.CreateDirectory(LOCAL_TEST_PATH);
+                Directory.CreateDirectory(LOCAL_TEST_PATH + "/test_framework");
+                Util.Debug("created " + LOCAL_TEST_PATH + " Folder");
+                Util.CopyPasteFromDirectory(ORIGINAL_TEST_FOLDER_PATH, LOCAL_TEST_PATH);
+            }
+            
+
             // 3. initialize empty index.html file
-            string[] initial_index_html = File.ReadAllLines(".test/index.html");
+            string[] initial_index_html = File.ReadAllLines(LOCAL_TEST_PATH + "/index.html");
             List<string> index_html = new List<string>();          
 
             // 4. past test code into index.html
