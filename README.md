@@ -13,6 +13,7 @@ What it provides
 5. Save your changes within pico8 `CTRL+S` as usual
 6. End Pico8
 7. run cmd `pico8-cli unpack override` to apply the changes to the unpacked file
+8. run cmd `pico8-cli test` to setup (first time) and run tests
 
 # Dependencies
 Before you can use you have to make sure that Pico8 is installed on your loacla machine. The whole init/unpack/pack stuff will work, but to use the run cmd you need to have pico8 locally at the default path `C:\\Program Files (x86)\\PICO-8\\pico8.exe\` installed.
@@ -25,6 +26,7 @@ To use the file globaly on your machine you need to install it manually.
 ```
 C:\Program Files (x86)\my_cmd_tools
   |-pico8-cli <-folder not zip!
+      |-test   <- folder which holds the testFramework build
       |-pico8.cli.config
       |-pico8-cli.deps.json
       |-pico8-cli.dll
@@ -37,7 +39,7 @@ C:\Program Files (x86)\my_cmd_tools
 5. now open a new CMD and type `pico8-cli` and if you see the following you succeded:
 ```
 C:\Users\saturn91>pico8-cli
-[info]: please provide one of the options: init, unpack, pack, run,
+[info]: please provide one of the options: init, unpack, pack, run, test,
 ```
 
 # Using the cli
@@ -104,3 +106,115 @@ C:\Users\saturn91\Desktop\saturn91-dungeon-crawler>pico8-cli unpack
 [info]: The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'
 ```
 
+## Unit Testing setup and usage
+### I do not know what Unit testing is
+If you do not know what Unit tests are and are interested in the topic, have a look here: [Wikipedia/Unittests](https://en.wikipedia.org/wiki/Unit_testing). It allows you to test certain functions of your code, to make sure the always work as expected. It allows you to test fast.
+
+### Disclaimer
+My Testframework is using regular lua to run its tests... therefor certain Pico8 specific functions like "+=" do not run nativly in my Testingframwork. I did translate the follwoing already into the engine, but be aware that in the whole lua file which you want to test you can only use native lua. An Exception are the bellow shown pico8 specific rules which I translate into default lua when you start a test:
+
+1. `if (x) doB()`
+2. `+=`
+3. `!=`
+
+**TLDR: only use default lua in tabs which should be tested in aswell as in the test file** 
+
+### What the integrated Testframework provides
+I set up a simplified Test framework within pico8-cli which allows you to write tests for certain functions. The results will be displayed in a very simple index.html file within your browser.
+
+### Set up a test
+In this section I will explain to you how you have to setup everything for testing using a simple and a more complex topic.
+1. the basics -> write and test a xor function
+2. the complex -> expand the test file with a get_rnd_from_array function
+
+#### The basics
+Ok so you decided during development of your pico8-cli project, that you need to test a xor function. An XOR function is basically an or function with the exception that the result of `true xor true` is `false`. So in your seperat lua file (e.g. 05_utils.lua) you write the following code:
+
+```lua
+--utils
+
+function xor(a,b)
+    if (a and b) return false
+    return a or b
+end
+``` 
+
+This function should now be tested.
+
+#### Testfunktion for xor
+To write a test in general we have to use the function `assert_equal(obj, obj, string)` which is specific to my test framework. It allows you to check if two statements are the same. I.e. to test if xor(true,true) results in false as expected, we would write the bellow test. Please also note the text at the end, this is the description to allows us to identify which test case has failed.
+
+```lua
+-- assert that  1.object == 2.object + description
+assert_equal(xor(true,true),false,"xor 1-1")
+```
+
+1. Copy the tab in which your xor function is specified (e.g. 05_utils.lua) and replace the `.` at the end with `.test.lua` (so you get 05_utils.test.lua) this will tell 1. pico8-cli to not use it in the build/pack, and 2. the testframwork to use it as a test.
+
+2. For xor we want to test 4 cases: `false, false` `true, false` `false, true` `true, true`
+3. Write the 4 cases as follows into the .test file
+```lua
+--xor
+assert_equal(xor(true,false),true,"xor 1-0")
+assert_equal(xor(false,true),true,"xor 0-1")
+assert_equal(xor(false,false),false,"xor 0-0")
+assert_equal(xor(true,true),false,"xor 1-1")
+```
+4. open your terminal and run pico8-cli test
+5. your browser will automatically open and show the results as follows:
+```
+[RUN ]: lua
+_utils.test.lua
+[PASS] -> xor 1-0
+[PASS] -> xor 0-1
+[PASS] -> xor 0-0
+[PASS] -> xor 1-1
+[ OK ]: test succeded: 4/4 passed
+```
+
+Congrats you just wrote your own unit test, to see how a failed test would look like, you can either play with the expected values in the test, or alter the XOR function. Then jsut simply rerun the code.
+
+### Complex example
+In order to test a function which uses Pico8 specific functions like rnd() or ceil() we have to mock them. The bellow example shows how you would do that. I will not explain it further but let you try arround:
+
+1. code to test (at the bottom of 05_utils.lua)
+```lua
+function get_rnd_from_arr(arr)
+    local index = ceil(rnd(#arr))
+    return arr[index]
+end
+```
+
+2. Unit test at the bottom of 05_utils.test.lua)
+```lua
+--get_rnd_from_arr
+-- mock rnd -> will just increase the number by one each time
+local counter = 0
+function rnd() 
+	counter+=1
+	return counter
+end
+
+--mock ceil
+function ceil(i)
+	return i
+end
+
+local _1
+local _2
+local _3
+local _4
+for i=1, 4 do
+	local rnd_num = get_rnd_from_arr{1,2,3,4}
+	if (rnd_num == 1) _1 = true
+	if (rnd_num == 2) _2 = true
+	if (rnd_num == 3) _3 = true
+	if (rnd_num == 4) _4 = true
+end
+
+assert_equal(_1 and _2 and _3 and _4, true, "get rnd from array")
+```
+
+### Setup a Github Page on master so you can always see the state of your tests
+If you want to always see the latest state of your test on your github repo, as the index.html gets saved within your github repo, you can host your project as a github page and always see if all tests are passing on your current master.
+Learn [here](https://pages.github.com/) hwo you can setup a Github page from your Github repository.
