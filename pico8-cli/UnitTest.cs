@@ -102,12 +102,12 @@ namespace pico8_cli
             }
         }
 
-        public static void RunTest()
+        public static bool RunTest()
         {
-            RunTest(true);
+            return RunTest(true);
         }
 
-        public static void RunTest(bool showWarning)
+        public static bool RunTest(bool showWarning)
         {
             // 1. search for test.lua files in lua folder and break if none are found
             testFiles = new Dictionary<string, UnitTestFile>();
@@ -115,7 +115,7 @@ namespace pico8_cli
             if(!Directory.Exists("lua"))
             {
                 if(showWarning) Util.Error("Please verify that pico8-cli was started within a pico8-cli project, you can run pico8-cli init");
-                return;
+                return false;
             }
 
             string[] luaFiles = Directory.GetFiles("lua");
@@ -158,7 +158,7 @@ namespace pico8_cli
             if (!Directory.Exists(ORIGINAL_TEST_FOLDER_PATH))
             {
                 Util.Info("your installation is not set up for testing, directory '.test' does not exist on the instalation path");
-                return;
+                return false;
             }
 
 
@@ -203,6 +203,8 @@ namespace pico8_cli
 
             // 5. open index.html in browser
             Util.ExecuteCommandSync("cmd /c start index.html");
+
+            return true;
         }
     }
 }

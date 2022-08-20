@@ -26,63 +26,9 @@ last build: never
             "__music__"
         };
 
-        private static void StartLog()
-        {
-            Util.Debug("starting [" + Program.current_mode + "] process at: " + Program.current_path);
-        }
-
-        private static void EndLog()
-        {
-            Util.Debug("[" + Program.current_mode + "] has succeded");
-        }
-
         public static bool IsPico8CliProject()
         {
             return Directory.Exists(".pico8-cli");
-        }
-
-        public static void Run(RUN_OPTIONS mode)
-        {
-            StartLog();
-            bool succeded = false;
-
-            if (mode != RUN_OPTIONS.init && !IsPico8CliProject())
-            {
-                Util.Error("currently not in a pico8-cli project, please run pico8-cli init");
-                return;
-            }
-
-            switch (mode)
-            {
-                case RUN_OPTIONS.init:
-                    succeded = Init();
-                    break;
-                case RUN_OPTIONS.unpack:
-                    succeded = UnPack(Setup.properties["override"]);
-                    break;
-                case RUN_OPTIONS.pack:
-                    succeded = Pack();
-                    break;
-                case RUN_OPTIONS.run:
-                    Pack();
-                    if (Directory.Exists(UnitTest.LOCAL_TEST_PATH)) UnitTest.RunTest();
-                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + " " + Util.GetGameName() + ".p8");
-                    succeded = true;
-                    UnPack(true);
-                    break;
-                case RUN_OPTIONS.build:
-                    Build.Do();
-                    break;
-                case RUN_OPTIONS.test:
-                    UnitTest.RunTest();
-                    break;
-            }
-
-            if (succeded)
-            {
-                UpdateProjectConfigFile(mode);
-                EndLog();
-            }
         }
 
         private static bool InitializePico8CliProject()
@@ -185,8 +131,7 @@ __sfx__
                 {
                     Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
                 }
-                UpdateProjectConfigFile(RUN_OPTIONS.init);
-                return UnPack(Setup.properties["override"]);
+                return UnPack(true);
             }
 
             Util.Error(Util.GetGameName() + " is already initialized");
@@ -243,14 +188,14 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             }
         }
 
-        private static bool Init()
+        public static bool Init()
         {
             InitializeGitRepository();
             AddReadme();
             return InitializePico8CliProject();
         }
 
-        private static bool Pack()
+        public static bool Pack()
         {
             // 1. create backup of the original file (with before_pack)
             CreateBackupOfPico8File("before_pack");
@@ -288,7 +233,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             return true;
         }
 
-        private static void UpdateProjectConfigFile(RUN_OPTIONS mode)
+        public static void UpdateProjectConfigFile(string cmdName)
         {
 
             string configFile = Program.PROJECT_CONFIG_FILE_PATH;
@@ -307,27 +252,27 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
                 configFileLines = Util.GetFileLines(configFile);
             }
 
-            switch (mode)
+            switch (cmdName)
             {
-                case RUN_OPTIONS.unpack:
+                case "unpack":
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
                         if (configFileLines[i].StartsWith("last unpacked:")) configFileLines[i] = "last unpacked: " + DateTime.Now.ToString();
                     }
                     break;
-                case RUN_OPTIONS.pack:
+                case "pack":
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
                         if (configFileLines[i].StartsWith("last packed:")) configFileLines[i] = "last packed: " + DateTime.Now.ToString();
                     }
                     break;
-                case RUN_OPTIONS.run:
+                case "run":
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
                         if (configFileLines[i].StartsWith("last run:")) configFileLines[i] = "last run: " + DateTime.Now.ToString();
                     }
                     break;
-                case RUN_OPTIONS.build:
+                case "build":
                     for (int i = 0; i < configFileLines.Length; i++)
                     {
                         if (configFileLines[i].StartsWith("last build:")) configFileLines[i] = "last build: " + DateTime.Now.ToString();
@@ -370,7 +315,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             File.WriteAllLines(Program.REST_OF_FILE_PATH, lines);
         }
 
-        private static bool UnPack(bool doOverride)
+        public static bool UnPack(bool doOverride)
         {
             if (Directory.Exists("lua") || Directory.Exists(Program.RESOURCE_FOLDER))
             {

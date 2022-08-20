@@ -27,6 +27,21 @@
     "pico8-cli build": {
       "commandName": "Project",
       "commandLineArgs": "build debug"
+    },
+    "pico8-cli help": {
+      "commandName": "Project",
+      "commandLineArgs": "help"
+    },
+    "pico8-cli run wrong param": {
+      "commandName": "Project",
+      "commandLineArgs": "run test"
+    },
+    "pico8-cli run -t": {
+      "commandName": "Project",
+      "commandLineArgs": "run -t"
+    },
+    "pico8-cli": {
+      "commandName": "Project"
     }
   }
 }
