@@ -4,4 +4,5 @@ __lua__
 -- BUILD.P8
 load("_GAME_/_GAME_.p8")
 export("_GAME_/_GAME_.bin -i _GAME_/_GAME_.p8")
+export("-f _GAME_/_GAME_.html -i _GAME_/_GAME_.p8")
 print("Exported: _GAME_")

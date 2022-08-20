@@ -41,16 +41,24 @@ namespace pico8_cli
             string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
             string gameName = Util.GetGameName();
             Lua.Pack();
+
+            //clear build folder
+            if (Directory.Exists(buildFolder))
+            {
+                DirectoryInfo di = new DirectoryInfo(buildFolder);
+                di.Delete(true);
+            }
             
             Directory.CreateDirectory(buildFolder);
             
-            //clear build folder
-            DirectoryInfo di = new DirectoryInfo(buildFolder);
-            foreach (FileInfo file in di.GetFiles()) file.Delete();
-
             File.Copy(gameName + ".p8", buildFolder + "/" + gameName + ".p8");
-            if (!File.Exists(buildFolder + "/" + gameName + ".p8")) Util.Error("not able to write: " + buildFolder + "/" + gameName + ".p8");
+            if (!File.Exists(buildFolder + "/" + gameName + ".p8"))
+            {
+                Util.Error("not able to write: " + buildFolder + "/" + gameName + ".p8");
+                return;
+            }
 
+            Directory.CreateDirectory(buildFolder + "/" + Util.GetGameName() + "_html");
             Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -x " + internalBuildFile);
             Util.Info("Build succeded, find your files here: " + buildFolder);
         }
