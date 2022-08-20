@@ -21,6 +21,12 @@ namespace pico8_cli
                 return false;
             }
 
+            if (!File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt"))
+            {
+                Util.Error("you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card");
+                return false;
+            }
+
             if(!File.Exists(internalBuildFile))
             {
                 File.Copy(Program.INSTALLATION_PATH + "/build.p8", internalBuildFile);
