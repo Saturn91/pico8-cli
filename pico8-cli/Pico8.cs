@@ -12,6 +12,7 @@ namespace pico8_cli
 last unpacked: #UNPACKED_DATE
 last packed: never
 last run: never
+last build: never
 ";
 
         public static readonly string[] P8_TAGS =
@@ -326,6 +327,13 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
                         if (configFileLines[i].StartsWith("last run:")) configFileLines[i] = "last run: " + DateTime.Now.ToString();
                     }
                     break;
+                case RUN_OPTIONS.build:
+                    for (int i = 0; i < configFileLines.Length; i++)
+                    {
+                        if (configFileLines[i].StartsWith("last build:")) configFileLines[i] = "last build: " + DateTime.Now.ToString();
+                    }
+                    break;
+                    
             }
 
             File.WriteAllLines(configFile, configFileLines);

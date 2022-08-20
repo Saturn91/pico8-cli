@@ -10,6 +10,39 @@ namespace pico8_cli
     {
         public static readonly string pico8CardFolder = Program.GLOBAL_SETTINGS[GlobalSettings.Values.localPico8_cart_folder_location].Replace("%APPDATA%", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
         public static readonly string internalBuildFile = "./.pico8-cli/build.p8";
+        public static readonly string buildIconConfig = "./buildIconConfig.txt";
+
+        private static string SetupBuildP8File()
+        {
+            string output = File.ReadAllText(internalBuildFile);
+            string[] iconSettings = File.ReadAllLines(buildIconConfig);
+
+            Dictionary<string, int> iconSettingsLookup = new Dictionary<string, int>();
+            foreach(string line in iconSettings)
+            {
+                if (line.Contains(":"))
+                {
+                    string[] substrings = line.Split(":");
+                    string property = substrings[0];
+                    try
+                    {
+                        int value = int.Parse(substrings[1]);
+                        iconSettingsLookup.Add(property, value);
+                    } catch { }                    
+                }
+            }
+
+            output = output.Replace("_GAME_", Util.GetGameName());
+
+            string[] possibleParams = { "i", "s", "c" };
+
+            for (int i = 0; i < possibleParams.Length; i++)
+            {
+                int replacement = iconSettingsLookup.ContainsKey(possibleParams[i]) ? iconSettingsLookup[possibleParams[i]] : 0;
+                output = output.Replace("__" + possibleParams[i] + "__", "-" + possibleParams[i] + " " + replacement);
+            }
+            return output;
+        }
 
         private static bool Init()
         {
@@ -23,16 +56,22 @@ namespace pico8_cli
 
             if (!File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt"))
             {
-                Util.Error("you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card");
+                Util.Error("you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card and then save (ctrl+S)");
                 return false;
             }
-
-            if(!File.Exists(internalBuildFile))
+           
+            File.Copy(Program.INSTALLATION_PATH + "/build.p8", internalBuildFile, true);
+            if(!File.Exists(buildIconConfig))
             {
-                File.Copy(Program.INSTALLATION_PATH + "/build.p8", internalBuildFile);
-                string localBuildFile = File.ReadAllText(internalBuildFile).Replace("_GAME_", Util.GetGameName());
-                File.WriteAllText(internalBuildFile, localBuildFile);
+                string initialIconBuildConfig = @"this params are used to describe the icon for binary builds
+i: 1
+s: 1
+c: 0";
+
+                File.WriteAllText(buildIconConfig, initialIconBuildConfig);
             }
+            string localBuildFile = SetupBuildP8File();
+            File.WriteAllText(internalBuildFile, localBuildFile);       
 
             return true;
         }
