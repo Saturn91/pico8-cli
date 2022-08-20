@@ -59,6 +59,7 @@ namespace pico8_cli
 
         public static void ExecuteCommandSync(object command)
         {
+            Debug("staring cmd: " + command);
             try
             {
                 // create the ProcessStartInfo using "cmd" as the program to be run,

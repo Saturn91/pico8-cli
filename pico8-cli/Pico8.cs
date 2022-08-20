@@ -65,9 +65,12 @@ last run: never
                 case RUN_OPTIONS.run:
                     Pack();
                     if (Directory.Exists(UnitTest.LOCAL_TEST_PATH)) UnitTest.RunTest();
-                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + Util.GetGameName() + ".p8");
+                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + " " + Util.GetGameName() + ".p8");
                     succeded = true;
                     UnPack(true);
+                    break;
+                case RUN_OPTIONS.build:
+                    Build.Do();
                     break;
                 case RUN_OPTIONS.test:
                     UnitTest.RunTest();

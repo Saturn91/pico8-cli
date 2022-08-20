@@ -18,11 +18,15 @@
     },
     "pico8-cli-run": {
       "commandName": "Project",
-      "commandLineArgs": "run"
+      "commandLineArgs": "run debug"
     },
     "pioc8-cli-test": {
       "commandName": "Project",
       "commandLineArgs": "test debug"
+    },
+    "pico8-cli build": {
+      "commandName": "Project",
+      "commandLineArgs": "build debug"
     }
   }
 }

@@ -10,7 +10,8 @@ namespace pico8_cli
         public enum Values
         {
             localRunCommand,
-            pico8Version
+            pico8Version,
+            localPico8_cart_folder_location,
         }
 
         public string localRunCommand { get; private set; }
@@ -27,7 +28,7 @@ namespace pico8_cli
             return values;
         }
 
-        public static Dictionary<GlobalSettings.Values, string> LoadFromFile()
+        public static Dictionary<Values, string> LoadFromFile()
         {
 
             string[] loadedLines = File.ReadAllLines(Program.GLOBAL_CONFIG_FILE_PATH);
