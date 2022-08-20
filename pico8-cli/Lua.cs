@@ -56,14 +56,16 @@ namespace pico8_cli
             for (int i = 0; i < tabFiles.Length; i++)
             {
                 string tab = tabFiles[i];
-
-                string[] lines = File.ReadAllLines(tab);
-                luaLines.AddRange(lines);
-                if (i < tabFiles.Length - 1)
+                if (tab.EndsWith(".lua") & !tab.EndsWith(".test.lua"))
                 {
+                    string[] lines = File.ReadAllLines(tab);
+                    luaLines.AddRange(lines);
                     luaLines.Add("-->8");
                 }
             }
+
+            // remove -->8 (tab seperator) at the end
+            luaLines.RemoveAt(luaLines.Count - 1);
 
             return luaLines.ToArray();
         }

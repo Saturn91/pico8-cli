@@ -59,6 +59,7 @@ namespace pico8_cli
 
         public static void ExecuteCommandSync(object command)
         {
+            Debug("staring cmd: " + command);
             try
             {
                 // create the ProcessStartInfo using "cmd" as the program to be run,
@@ -82,10 +83,20 @@ namespace pico8_cli
                 string result = proc.StandardOutput.ReadToEnd();
                 // Display the command output.
                 Console.WriteLine(result);
+                proc.WaitForExit();
             }
             catch (Exception objException)
             {
                 Error(command + " failed.: " + objException.ToString());
+            }
+        }
+
+        public static void CopyPasteFromDirectory(string sourceDirectory, string newDirectory)
+        {
+            var allFiles = Directory.GetFiles(sourceDirectory, "*.*", SearchOption.AllDirectories);
+            foreach (string newPath in allFiles)
+            {
+                File.Copy(newPath, newPath.Replace(sourceDirectory, newDirectory), true);
             }
         }
     }

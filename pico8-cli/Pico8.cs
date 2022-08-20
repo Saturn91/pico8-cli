@@ -35,25 +35,45 @@ last run: never
             Util.Debug("[" + Program.current_mode + "] has succeded");
         }
 
+        public static bool IsPico8CliProject()
+        {
+            return Directory.Exists(".pico8-cli");
+        }
+
         public static void Run(RUN_OPTIONS mode)
         {
             StartLog();
             bool succeded = false;
+
+            if (mode != RUN_OPTIONS.init && !IsPico8CliProject())
+            {
+                Util.Error("currently not in a pico8-cli project, please run pico8-cli init");
+                return;
+            }
+
             switch (mode)
             {
                 case RUN_OPTIONS.init:
                     succeded = Init();
                     break;
                 case RUN_OPTIONS.unpack:
-                    succeded = UnPack();
+                    succeded = UnPack(Setup.properties["override"]);
                     break;
                 case RUN_OPTIONS.pack:
                     succeded = Pack();
                     break;
                 case RUN_OPTIONS.run:
                     Pack();
-                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + Util.GetGameName() + ".p8");
+                    if (Directory.Exists(UnitTest.LOCAL_TEST_PATH)) UnitTest.RunTest();
+                    Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + " " + Util.GetGameName() + ".p8");
                     succeded = true;
+                    UnPack(true);
+                    break;
+                case RUN_OPTIONS.build:
+                    Build.Do();
+                    break;
+                case RUN_OPTIONS.test:
+                    UnitTest.RunTest();
                     break;
             }
 
@@ -165,7 +185,7 @@ __sfx__
                     Util.Info("File: " + Util.GetGameName() + ".p8" + " already exists, initialized project with existing file");
                 }
                 UpdateProjectConfigFile(RUN_OPTIONS.init);
-                return UnPack();
+                return UnPack(Setup.properties["override"]);
             }
 
             Util.Error(Util.GetGameName() + " is already initialized");
@@ -342,11 +362,11 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             File.WriteAllLines(Program.REST_OF_FILE_PATH, lines);
         }
 
-        private static bool UnPack()
+        private static bool UnPack(bool doOverride)
         {
             if (Directory.Exists("lua") || Directory.Exists(Program.RESOURCE_FOLDER))
             {
-                if (!Setup.properties["override"])
+                if (!doOverride)
                 {
                     Util.Info("The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'");
                     return false;
@@ -359,7 +379,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
                     foreach (FileInfo file in di.GetFiles())
                     {
-                        file.Delete();
+                        if(file.Name.EndsWith(".lua") &! file.Name.EndsWith(".test.lua")) file.Delete();
                     }
                 }
 
