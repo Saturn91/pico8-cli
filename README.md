@@ -13,6 +13,7 @@ What it provides
 5. Save your changes within pico8 `CTRL+S` as usual
 6. End Pico8
 7. run cmd `pico8-cli unpack override` to apply the changes to the unpacked file
+9. run cmd `pico8-cli build` to setup (first time) and build your game into binaries and web executables
 8. run cmd `pico8-cli test` to setup (first time) and run tests
 
 # Dependencies
@@ -89,6 +90,7 @@ C:\Users\saturn91\Desktop\saturn91-dungeon-crawler>pico8-cli run
 If pico8 is installed as described in [Dependencies](#Dependencies) this command will 
 1. pack the lua files into the `saturn91-dungeon-crawler.p8` file
 2. run it in pico8
+3. unpack again (in case you edited something within pico8)
 
 ## Unpack
 ```
@@ -104,6 +106,38 @@ To prevent you from accidentaly override pending changes in your lua/* files you
 C:\Users\saturn91\Desktop\saturn91-dungeon-crawler>pico8-cli unpack
 [info]: unpack
 [info]: The directory 'lua' already exists, by unpacking it will get overriden! if you are sure, run 'unpack override'
+```
+
+## Build
+Building was never easier with pico8, just run the cmd `pico8-cli build` and get promted with the following:
+
+You have to make sure to capture a label before you start a build if you get the following error description:
+```
+C:\Users\manue\Documents\GitHub\wowie_jam_4_0>pico8-cli build
+[info]: build
+[err.]: you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card and then save (ctrl+S)
+[err.]: not able to build...
+```
+
+Successfull build:
+```
+C:\Users\saturn91\Documents\GitHub\wowie_jam_4_0>pico8-cli build
+[info]: build
+RUNNING: ./.pico8-cli/build.p8
+EXPORT: wowie_jam_4_0/wowie_jam_4_0.bin -i 10 -s 2 -c 0 wowie_jam_4_0/wowie_jam_4_0.p8
+EXPORT: -f wowie_jam_4_0/wowie_jam_4_0.html wowie_jam_4_0/wowie_jam_4_0.p8
+
+[info]: Build succeded, find your files here: C:\Users\saturn91\AppData\Roaming\pico-8\carts/wowie_jam_4_0
+``` 
+### Defining the icon of the .exe and other
+After running the build command the first time you find a file "buildIconConfig.txt" in your repository.
+You can define there which sprites within your spritesheet should be used as a icon for your builds.
+
+```
+this params are used to describe the icon for binary builds <- this is a comment
+i: 10	<- use sprite 10
+s: 2	<- display 16x16 pixel (so in this case a 2x2 sprite
+c: 0	<- the transparency color, default is 0 (black)
 ```
 
 ## Unit Testing setup and usage
