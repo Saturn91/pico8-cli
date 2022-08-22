@@ -76,12 +76,12 @@ c: 0";
             return true;
         }
 
-        public static void Do()
+        public static bool Do()
         {
             if (!Init())
             {
                 Util.Error("not able to build...");
-                return;
+                return false;
             }
             string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
             string gameName = Util.GetGameName();
@@ -100,12 +100,14 @@ c: 0";
             if (!File.Exists(buildFolder + "/" + gameName + ".p8"))
             {
                 Util.Error("not able to write: " + buildFolder + "/" + gameName + ".p8");
-                return;
+                return false;
             }
 
             Directory.CreateDirectory(buildFolder + "/" + Util.GetGameName() + "_html");
             Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -x " + internalBuildFile);
             Util.Info("Build succeded, find your files here: " + buildFolder);
+
+            return true;
         }
     }
 }

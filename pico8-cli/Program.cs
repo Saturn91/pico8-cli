@@ -6,34 +6,9 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
 namespace pico8_cli
-{
-    public enum RUN_OPTIONS { init, unpack, pack, run, build, test };
-
+{ 
     class Setup
     {
-        public static Dictionary<string, bool> properties = new Dictionary<string, bool>()
-        {
-            { "debug", false },
-            { "override", false }
-        };
-
-        public static void HandleArgs(string[] args)
-        {
-            if (args == null || args.Length <= 1) return;
-
-            for (int i = 1; i < args.Length; i++)
-            {
-                string key = args[i];
-                if (properties.ContainsKey(key))
-                {
-                    Console.WriteLine("[Prop]: enabled: " + key);
-                    properties[key] = true;
-                } else
-                {
-                    Console.WriteLine("[Prop]: invalid property: " + key);
-                }              
-            }                
-        }
 
         public static string GetCurrentWorkingSpace()
         {
@@ -51,8 +26,6 @@ namespace pico8_cli
         public const string PRG_NAME = "pico8-cli";
         public readonly static string INSTALLATION_PATH = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         public static string current_path = Setup.GetCurrentWorkingSpace();
-        public static readonly string[] RUN_OPTIONS_STRINGS = Enum.GetNames(typeof(RUN_OPTIONS));
-        public static RUN_OPTIONS current_mode = RUN_OPTIONS.init;
         public static readonly string PROJECT_CONFIG_FILE_PATH = ".pico8-cli/" + Util.GetGameName() + ".p8.config";
         public static readonly string REST_OF_FILE_PATH = "meta/" + "restOfFile.p8";
         public static readonly string GLOBAL_CONFIG_FILE_PATH = INSTALLATION_PATH + "/pico8-cli.config";
@@ -66,37 +39,49 @@ namespace pico8_cli
             Util.Debug(PRG_NAME + " opened at: " + current_path);
         }
 
-        static bool SetCurrentMode(string[] args)
+        private static void RunHelp(string[] parameters)
         {
-            string errorMsgNoRunOption = "please provide one of the options: " + Util.ArrayToString<string>(RUN_OPTIONS_STRINGS);
-            if (args == null || args.Length <= 0)
-            {
-                Util.Info(errorMsgNoRunOption);
-                return false;
-            }
-            if (Array.IndexOf(RUN_OPTIONS_STRINGS, args[0]) == -1)
-            {
-                Util.Info(errorMsgNoRunOption);
-                return false;
-            }
-
-            current_mode = (RUN_OPTIONS) Array.IndexOf(RUN_OPTIONS_STRINGS, args[0]);
-
-            return true;
+            Util.Error("unknown command, please use one of the bellow cmds");
+            Command.COMMANDS["help"].Run(parameters);
         }
 
         static int Main(string[] args)
         {
-            Setup.HandleArgs(args);
+            Command.InitCommands();
+            CommandState result;
+
+            string[] parameters = args.Length > 1 ? args.SubArray(1, args.Length) : new string[0];
+            if (parameters == null) parameters = new string[0];
+
+            if (args.Length == 0)
+            {
+                RunHelp(parameters);
+                result = CommandState.FAILED;
+            } else if (Command.COMMANDS.ContainsKey(args[0]))
+            {
+                
+
+                if (args[0] != "init" && args[0] != "help" &!File.Exists(PROJECT_CONFIG_FILE_PATH))
+                {
+                    Util.Error("not within a pico8-cli project, please run pioc8-cli init");
+                    Command.COMMANDS["help"].Run(parameters);
+                    return -1;
+                }
+
+                
+
+                result = Command.COMMANDS[args[0]].Run(parameters);
+                if (result == CommandState.SUCCESS) Util.Info("cmd: " + args[0] + " succeded!");
+                
+            } else
+            {
+                RunHelp(parameters);
+                result = CommandState.FAILED;
+            }
+
             LogInstallAndLocationInfos();
 
-            if (!SetCurrentMode(args)) return 1;
-
-            Util.Info(current_mode.ToString());
-
-            Pico8.Run(current_mode);
-
-            return 1;
+            return result == CommandState.SUCCESS ? 1 : -1;
         }
     }
 }

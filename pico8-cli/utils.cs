@@ -9,7 +9,7 @@ namespace pico8_cli
     {
         public static void Debug(string msg)
         {
-            if (!Setup.properties["debug"]) return;
+            if (!Command.debugLogerActive) return;
             Console.WriteLine("[debg]: " + msg);
         }
 
