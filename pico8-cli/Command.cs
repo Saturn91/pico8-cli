@@ -29,6 +29,7 @@ namespace pico8_cli
             DEFAULT_PARAMETERS = new string[] { "debug" };
             COMMANDS = new Dictionary<string, Command>()
             {
+                { "status", new Status()},
                 { "init", new Init() },
                 { "unpack", new Unpack()},
                 { "pack", new Pack()},
@@ -233,6 +234,29 @@ namespace pico8_cli
         protected override string GetSpecificHelp()
         {
             return "help";
+        }
+    }
+
+    public class Status : Command
+    {
+        public Status() : base("status", new string[0]) { }
+
+        protected override CommandState OnRun(string[] parameters)
+        {
+            string status = "not within a pico8-cli project";
+            if (File.Exists(Program.PROJECT_CONFIG_FILE_PATH))
+            {
+                status = "Project: " + Util.GetGameName() + " is setup";
+            }
+
+            Console.WriteLine(status);
+
+            return CommandState.SUCCESS;
+        }
+
+        protected override string GetSpecificHelp()
+        {
+            return "see status of current project";
         }
     }
 
