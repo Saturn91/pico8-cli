@@ -42,6 +42,10 @@
     },
     "pico8-cli": {
       "commandName": "Project"
+    },
+    "pico8-cli status": {
+      "commandName": "Project",
+      "commandLineArgs": "status"
     }
   }
 }
