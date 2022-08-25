@@ -281,7 +281,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
                     
             }
 
-            if(File.Exists(Program.PROJECT_CONFIG_FILE_PATH)) File.WriteAllLines(configFile, configFileLines);
+            File.WriteAllLines(configFile, configFileLines);
         }
 
         public static void CreateBackupOfPico8File(string prefix)
