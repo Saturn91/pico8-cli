@@ -20,6 +20,7 @@ namespace pico8_cli
         public static Dictionary<string, Command> COMMANDS;
 
         public string name { get; private set; }
+        public bool updateConfigFile { get; private set; }
 
         protected string[] allowedParameters;
 
@@ -49,6 +50,17 @@ namespace pico8_cli
             List<string> allowedParamsList = new List<string>(allowedParameters);
             allowedParamsList.AddRange(DEFAULT_PARAMETERS);
             this.allowedParameters = allowedParamsList.ToArray();
+            updateConfigFile = false;
+        }
+
+        protected Command(string name, string[] allowedParameters, bool updateConfigFile)
+        {
+            this.name = name;
+
+            List<string> allowedParamsList = new List<string>(allowedParameters);
+            allowedParamsList.AddRange(DEFAULT_PARAMETERS);
+            this.allowedParameters = allowedParamsList.ToArray();
+            this.updateConfigFile = updateConfigFile;
         }
 
         public CommandState Run(string[] parameters)
@@ -73,7 +85,7 @@ namespace pico8_cli
             }
 
             CommandState result =  OnRun(parameters);
-            if(result == CommandState.SUCCESS) Pico8.UpdateProjectConfigFile(name);
+            if(result == CommandState.SUCCESS && updateConfigFile) Pico8.UpdateProjectConfigFile(name);
             return result;
         }
 
@@ -105,7 +117,7 @@ namespace pico8_cli
 
     public class Init : Command
     {
-        public Init() : base("init", new string[0]) { }
+        public Init() : base("init", new string[0], true) { }
 
         protected override CommandState OnRun(string[] parameters)
         {
@@ -121,7 +133,7 @@ namespace pico8_cli
 
     public class Unpack : Command
     {
-        public Unpack() : base("unpack", new string[] { "override" }) {}
+        public Unpack() : base("unpack", new string[] { "override" }, true) {}
         protected override CommandState OnRun(string[] parameters)
         {
             return Pico8.UnPack(HasParameter("override", parameters)) ? CommandState.SUCCESS : CommandState.FAILED;
@@ -135,7 +147,7 @@ namespace pico8_cli
 
     public class Pack: Command
     {
-        public Pack() : base("pack", new string[0]) {}
+        public Pack() : base("pack", new string[0], true) {}
 
         protected override CommandState OnRun(string[] parameters)
         {
@@ -150,7 +162,7 @@ namespace pico8_cli
 
     public class Run: Command
     {
-        public Run() : base("run", new string[] { "-t" }) { }
+        public Run() : base("run", new string[] { "-t" }, true) { }
 
         protected override CommandState OnRun(string[] parameters)
         { 
@@ -169,11 +181,11 @@ namespace pico8_cli
 
     public class Export: Command
     {
-        public Export() : base("build", new string[] { "-t" }) { }
+        public Export() : base("build", new string[] { "-t" }, true) { }
 
         protected override CommandState OnRun(string[] parameters)
         {
-            if (Directory.Exists(UnitTest.LOCAL_TEST_PATH) & !HasParameter("-t", parameters)) UnitTest.RunTest();
+            if (Directory.Exists(UnitTest.LOCAL_TEST_PATH) & !HasParameter("-t", parameters) && Build.CanBuild()) UnitTest.RunTest();
             return Build.Do() ? CommandState.SUCCESS : CommandState.FAILED;
         }
 
@@ -185,7 +197,7 @@ namespace pico8_cli
 
     public class Test : Command
     {
-        public Test() : base("test", new string[0]) { }
+        public Test() : base("test", new string[0], true) { }
 
         protected override CommandState OnRun(string[] parameters)
         {

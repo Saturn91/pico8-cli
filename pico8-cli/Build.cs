@@ -44,6 +44,11 @@ namespace pico8_cli
             return output;
         }
 
+        public static bool CanBuild()
+        {
+            return File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt");
+        }
+
         private static bool Init()
         {
             // 1. get build path from global config
@@ -54,7 +59,7 @@ namespace pico8_cli
                 return false;
             }
 
-            if (!File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt"))
+            if (!CanBuild())
             {
                 Util.Error("you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card and then save (ctrl+S)");
                 return false;
@@ -83,6 +88,7 @@ c: 0";
                 Util.Error("not able to build...");
                 return false;
             }
+
             string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
             string gameName = Util.GetGameName();
             Lua.Pack();
