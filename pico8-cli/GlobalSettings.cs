@@ -12,6 +12,7 @@ namespace pico8_cli
             localRunCommand,
             pico8Version,
             localPico8_cart_folder_location,
+            max_backup_file_cnt
         }
 
         public string localRunCommand { get; private set; }

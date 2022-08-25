@@ -284,6 +284,9 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             File.WriteAllLines(configFile, configFileLines);
         }
 
+        private const string backupPath = ".pico8-cli/backups/";
+        private const int maxBackupFileNum = 10;
+
         public static void CreateBackupOfPico8File(string prefix)
         {
             // if there is no already packed file skip this part
@@ -293,13 +296,30 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
                 //create backup
                 Directory.CreateDirectory(".pico8-cli/backups");
-                string datePrefix = DateTime.Now.ToString()
-                    .Replace(".", "")
-                    .Replace(" ", "")
-                    .Replace(":", "") + "_";
-                File.WriteAllLines(".pico8-cli/backups/" + datePrefix + Util.GetGameName() + "." + prefix + ".p8", lines);
+                string datePrefix = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+                File.WriteAllLines(backupPath + datePrefix + "_" + Util.GetGameName() + "." + prefix + ".p8", lines);
+
+                // delete oldest
+                string[] oldFiles = Directory.GetFiles(backupPath);
+
+                int localMaxBackupFiles = maxBackupFileNum;
+
+                try
+                {
+                    localMaxBackupFiles = int.Parse(Program.GLOBAL_SETTINGS[GlobalSettings.Values.max_backup_file_cnt]);
+                    Util.Debug("max files:" + localMaxBackupFiles);
+                }
+                catch { }
+
+                if (oldFiles.Length > localMaxBackupFiles)
+                {
+                    for(int i = 0; i < oldFiles.Length - localMaxBackupFiles; i++)
+                    {
+                        File.Delete(oldFiles[i]);
+                    }
+                }
             }
-            catch (Exception e) { }
+            catch { }
         }
 
         private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
