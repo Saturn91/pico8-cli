@@ -302,15 +302,24 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
                 // delete oldest
                 string[] oldFiles = Directory.GetFiles(backupPath);
 
-                if (oldFiles.Length > maxBackupFileNum)
+                int localMaxBackupFiles = maxBackupFileNum;
+
+                try
                 {
-                    for(int i = 0; i < oldFiles.Length - maxBackupFileNum; i++)
+                    localMaxBackupFiles = int.Parse(Program.GLOBAL_SETTINGS[GlobalSettings.Values.max_backup_file_cnt]);
+                    Util.Debug("max files:" + localMaxBackupFiles);
+                }
+                catch { }
+
+                if (oldFiles.Length > localMaxBackupFiles)
+                {
+                    for(int i = 0; i < oldFiles.Length - localMaxBackupFiles; i++)
                     {
                         File.Delete(oldFiles[i]);
                     }
                 }
             }
-            catch (Exception e) { }
+            catch { }
         }
 
         private static void CreateRestFileContent(string[] linesBefore, string[] linesAfter)
