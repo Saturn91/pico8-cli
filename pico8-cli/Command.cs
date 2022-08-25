@@ -34,7 +34,6 @@ namespace pico8_cli
                 { "pack", new Pack()},
                 { "run", new Run()},
                 { "build", new Export()},
-                { "export", new Export()},
                 { "test", new Test()},
                 { "--h", new Help()},
                 { "-h" , new Help()},
