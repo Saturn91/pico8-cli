@@ -46,6 +46,14 @@
     "pico8-cli status": {
       "commandName": "Project",
       "commandLineArgs": "status"
+    },
+    "pico8-cli deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy debug itch"
+    },
+    "pico8-cli deploy (no debug)": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy itch"
     }
   }
 }

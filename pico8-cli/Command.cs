@@ -35,6 +35,7 @@ namespace pico8_cli
                 { "pack", new Pack()},
                 { "run", new Run()},
                 { "build", new Export()},
+                { "deploy", new Deploy()},
                 { "test", new Test()},
                 { "--h", new Help()},
                 { "-h" , new Help()},
@@ -192,6 +193,28 @@ namespace pico8_cli
         protected override string GetSpecificHelp()
         {
             return "pack and export pico8, if -t is not provided and tests are setup, they will get triggered aswell";
+        }
+    }
+
+    public class Deploy: Command{
+
+        public Deploy() : base("deploy", new string[] { "-b", "itch" }, true) { }
+
+        protected override CommandState OnRun(string[] parameters)
+        {
+            if (HasParameter("itch", parameters))
+            {
+                return DeployToItch.Do(HasParameter("-b", parameters), DeployToItch.DeployPlatform.itch);
+            }
+
+            Util.Error("please provide for which platform you would like to deploy i.e. itch");
+            
+            return CommandState.FAILED;
+        }
+
+        protected override string GetSpecificHelp()
+        {
+            return " deploy project to the selected platforem i.e. itch. use -b to build before deploy";
         }
     }
 

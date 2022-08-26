@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace pico8_cli
@@ -11,6 +12,7 @@ namespace pico8_cli
         public static readonly string pico8CardFolder = Program.GLOBAL_SETTINGS[GlobalSettings.Values.localPico8_cart_folder_location].Replace("%APPDATA%", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
         public static readonly string internalBuildFile = "./.pico8-cli/build.p8";
         public static readonly string buildIconConfig = "./buildIconConfig.txt";
+        public static readonly string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
 
         private static string SetupBuildP8File()
         {
@@ -89,7 +91,6 @@ c: 0";
                 return false;
             }
 
-            string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
             string gameName = Util.GetGameName();
             Lua.Pack();
 
@@ -111,6 +112,7 @@ c: 0";
 
             Directory.CreateDirectory(buildFolder + "/" + Util.GetGameName() + "_html");
             Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -x " + internalBuildFile);
+            ZipFile.CreateFromDirectory(buildFolder + "/" + gameName + "_html", buildFolder + "/" + gameName + "_html.zip");
             Util.Info("Build succeded, find your files here: " + buildFolder);
 
             return true;

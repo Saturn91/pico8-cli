@@ -36,6 +36,7 @@ last build: never
             if (!File.Exists(Program.PROJECT_CONFIG_FILE_PATH))
             {
                 Directory.CreateDirectory(".pico8-cli");
+ 
                 string empty_pico8_project = @"pico-8 cartridge // http://www.pico-8.com
 #VERSION
 __lua__
