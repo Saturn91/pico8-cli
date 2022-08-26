@@ -35,6 +35,7 @@ namespace pico8_cli
                 { "pack", new Pack()},
                 { "run", new Run()},
                 { "build", new Export()},
+                { "deploy", new Deploy()},
                 { "test", new Test()},
                 { "--h", new Help()},
                 { "-h" , new Help()},
@@ -192,6 +193,31 @@ namespace pico8_cli
         protected override string GetSpecificHelp()
         {
             return "pack and export pico8, if -t is not provided and tests are setup, they will get triggered aswell";
+        }
+    }
+
+    public class Deploy: Command{
+
+        public Deploy() : base("deploy", new string[] { "-b" }, true) { }
+
+        protected override CommandState OnRun(string[] parameters)
+        {
+            // 1. check if butler/butler.exe exists else -> warning
+            if (DeployToItch.ButlerIsInstalled()) return CommandState.FAILED;
+
+            // 2. read itch.io config file else log error
+
+
+            // 3. build project if hasParameter("-b") build
+
+            // 4. check if build specific file(s) exists and deploy them -> log id successfull or not
+           
+            return CommandState.SUCCESS;
+        }
+
+        protected override string GetSpecificHelp()
+        {
+            return " deploy project to itch.io as specified in 'itch.io.config'. use -b to build before deploy";
         }
     }
 

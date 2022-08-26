@@ -46,6 +46,10 @@
     "pico8-cli status": {
       "commandName": "Project",
       "commandLineArgs": "status"
+    },
+    "pico8-cli deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy debug"
     }
   }
 }
