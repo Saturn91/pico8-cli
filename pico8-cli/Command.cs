@@ -198,26 +198,23 @@ namespace pico8_cli
 
     public class Deploy: Command{
 
-        public Deploy() : base("deploy", new string[] { "-b" }, true) { }
+        public Deploy() : base("deploy", new string[] { "-b", "itch" }, true) { }
 
         protected override CommandState OnRun(string[] parameters)
         {
-            // 1. check if butler/butler.exe exists else -> warning
-            if (DeployToItch.ButlerIsInstalled()) return CommandState.FAILED;
+            if (HasParameter("itch", parameters))
+            {
+                return DeployToItch.Do(HasParameter("-b", parameters), DeployToItch.DeployPlatform.itch);
+            }
 
-            // 2. read itch.io config file else log error
-
-
-            // 3. build project if hasParameter("-b") build
-
-            // 4. check if build specific file(s) exists and deploy them -> log id successfull or not
-           
-            return CommandState.SUCCESS;
+            Util.Error("please provide for which platform you would like to deploy i.e. itch");
+            
+            return CommandState.FAILED;
         }
 
         protected override string GetSpecificHelp()
         {
-            return " deploy project to itch.io as specified in 'itch.io.config'. use -b to build before deploy";
+            return " deploy project to the selected platforem i.e. itch. use -b to build before deploy";
         }
     }
 

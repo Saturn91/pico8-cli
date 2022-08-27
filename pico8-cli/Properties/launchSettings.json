@@ -49,7 +49,7 @@
     },
     "pico8-cli deploy": {
       "commandName": "Project",
-      "commandLineArgs": "deploy debug"
+      "commandLineArgs": "deploy debug itch"
     }
   }
 }

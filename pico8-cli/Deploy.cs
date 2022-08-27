@@ -5,41 +5,91 @@ using System.Text;
 
 namespace pico8_cli
 {
+
     class DeployToItch
     {
         private static readonly string butlerExePath = Program.INSTALLATION_PATH + "/butler/butler.exe";
         private static readonly string itchIoConfig = Program.current_path + "/deploy.config";
         private static string initialItchIoConfig = @"itch.io-project: youruser/yourgame";
+        private static string[] pico8CliBuilds = { "X_html.zip", "X.bin/X_linux.zip", "X.bin/X_osx.zip", "X.bin/X_raspi.zip", "X.bin/X_windows.zip" };
+        private static string[] itchIoChannels = { "web", "linux", "osx", "linux", "windows" };
 
-        public static bool ButlerIsInstalled()
+        public enum DeployPlatform
         {
-            bool fileExists = File.Exists(butlerExePath);
-            if(!fileExists) Util.Error("the file: " + butlerExePath + " does not exist please download butler from itch.io and past all contained files there");
-            return fileExists;
+            itch
         }
 
-        public static void Init()
+        public static CommandState Do(bool build, DeployPlatform platform)
         {
-            // check if file already exist
-            if (File.Exists(itchIoConfig)) return;
-            File.WriteAllText(itchIoConfig, initialItchIoConfig);
-        }
+            // 1. check setup for deployment platform
+            if (!PreInstall(platform)) return CommandState.FAILED;
 
-        public static void Do(bool build)
-        {
-            // 1. read itch.io config file else log error
-            if (!File.Exists(itchIoConfig))
-            {
-                Init();
-                Util.Info("created File: " + itchIoConfig + ", please define your username and game as shown in the example");
-                return;
-            }
+            // 2. check if config file for platform exists else fire warning and create default file
+            if (!Init(platform)) return CommandState.FAILED;
 
-            // 2. build project if hasParameter("-b") build
+            // 3. build project if hasParameter("-b") build
             if (build) Command.COMMANDS["build"].Run(new string[0]);
 
-            // 3. check if build specific file(s) exists and deploy them -> log id successfull or not
+            // 4. check if build specific file(s) exists and deploy them -> log id successfull or not
 
+            if (!Deploy(platform)) return CommandState.FAILED;
+
+            return CommandState.SUCCESS;
+        }
+
+        private static bool PreInstall(DeployPlatform platform)
+        {
+            switch (platform)
+            {
+                case DeployPlatform.itch:
+                    bool fileExists = File.Exists(butlerExePath);
+                    if (!fileExists) Util.Error("the file: " + butlerExePath + " does not exist please download butler from itch.io and past all contained files there");
+                    return fileExists;
+            }
+
+            return false;
+        }
+
+        private static bool Init(DeployPlatform platform)
+        {
+            switch (platform)
+            {
+                case DeployPlatform.itch:
+                    if (File.Exists(itchIoConfig)) return true;
+                    File.WriteAllText(itchIoConfig, initialItchIoConfig);
+                    Util.Info("created File: " + itchIoConfig + ", please define your username and game as shown in the example");
+                    break;
+            }
+
+            return false;
+        }
+
+        private static bool Deploy(DeployPlatform platform)
+        {
+            bool succeded = false;
+            for(int i = 0; i < pico8CliBuilds.Length; i++)
+            {
+                string path = Build.buildFolder + "/" + pico8CliBuilds[i].Replace("X", Util.GetGameName());
+
+                //2. check if build Directory exist
+                if (File.Exists(path)) {
+
+                    // 3. run deploy
+                    switch (platform)
+                    {
+                        case DeployPlatform.itch:
+                            string itchIoGameId = File.ReadAllLines(itchIoConfig)[0].Split(":")[1].Substring(1);
+                            Util.ExecuteCommandSync("butler push " + path + " " + itchIoGameId + ":" + itchIoChannels[i] );
+                            succeded = true;
+                            break;
+                    }
+                } else
+                {
+                    Util.Info("Did not find File: " + path + ", was not able to deploy");
+                }                
+            }            
+
+            return succeded;
         }
     }
 }
