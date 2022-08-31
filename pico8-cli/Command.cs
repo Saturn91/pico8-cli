@@ -163,20 +163,21 @@ namespace pico8_cli
 
     public class Run: Command
     {
-        public Run() : base("run", new string[] { "-t" }, true) { }
+        public Run() : base("run", new string[] { "-t", "-u" }, true) { }
 
         protected override CommandState OnRun(string[] parameters)
         { 
             Pico8.Pack();
             if (Directory.Exists(UnitTest.LOCAL_TEST_PATH) &! HasParameter("-t", parameters)) UnitTest.RunTest();
             Util.ExecuteCommandSync(Program.GLOBAL_SETTINGS[GlobalSettings.Values.localRunCommand] + " " + Util.GetGameName() + ".p8");
-            Pico8.UnPack(true);
+            if (!HasParameter("-u", parameters)) Pico8.UnPack(true);
+            else Util.Info("[-u]: did not unpack automatically, if you have changed the .p8 with pico8 unpack now manually!");
             return CommandState.SUCCESS;
         }
 
         protected override string GetSpecificHelp()
         {
-            return "pack and run pico8, if -t is not provided and tests are setup, they will get triggered";
+            return "pack and run pico8 and unpack afterwards, if -t is not provided and tests are setup, they will get triggered, -u will not trigger an automatic unpack after the run";
         }
     }
 

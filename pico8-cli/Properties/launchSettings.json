@@ -54,6 +54,10 @@
     "pico8-cli deploy (no debug)": {
       "commandName": "Project",
       "commandLineArgs": "deploy itch"
+    },
+    "pico8-cli run -u": {
+      "commandName": "Project",
+      "commandLineArgs": "run -u"
     }
   }
 }
