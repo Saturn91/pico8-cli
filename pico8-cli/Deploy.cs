@@ -78,7 +78,7 @@ namespace pico8_cli
                     {
                         case DeployPlatform.itch:
                             string itchIoGameId = File.ReadAllLines(itchIoConfig)[0].Split(":")[1].Substring(1);
-                            Util.ExecuteCommandSync(butlerExePath +  " push " + path + " " + itchIoGameId + ":" + itchIoChannels[i] );
+                            Util.ExecuteCommandSync("\""+butlerExePath +  "\" push " + path + " " + itchIoGameId + ":" + itchIoChannels[i] );
                             succeded = true;
 
                             if (itchIoChannels[i] == "web") Util.Info("Deployed web version to https://" + itchIoGameId.Replace("/", ".itch.io/") + " please make sure to set this project up as playable in the browser");
