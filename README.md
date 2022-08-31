@@ -14,7 +14,10 @@ What it provides
 6. End Pico8
 7. run cmd `pico8-cli unpack override` to apply the changes to the unpacked file
 9. run cmd `pico8-cli build` to setup (first time) and build your game into binaries and web executables
+10. run cmd `pico8-cli deploy itch -b` generates a prefilled deploy.config file in which you have to enter your username and the id of an already existing itch.io project. Run command again to build and deploy your game on itch
 8. run cmd `pico8-cli test` to setup (first time) and run tests
+10. run cmd `pico8-cli status` to see if you are currently within a pico8-cli project or not
+11. run cmd `pico8-cli help` to see all possible commands and their parameters
 
 # Dependencies
 Before you can use you have to make sure that Pico8 is installed on your loacla machine. The whole init/unpack/pack stuff will work, but to use the run cmd you need to have pico8 locally at the default path `C:\\Program Files (x86)\\PICO-8\\pico8.exe\` installed.
@@ -60,8 +63,8 @@ C:\Users\saturn91\Desktop\saturn91-dungeon-crawler>pico8-cli init
 ```
 saturn91-dungeon-crawler
 |-.pico8-cli                              <- eventually hidden as it has a dot (you do not need it most of the time)
-|   |-backups                             <- each pack / unpack will generate a packup of the `saturn91-dungeon-crawler.p8` file here
-|   |-saturn91-dungeon-crawler.p8.config  <- holds some information and data how to pack / unpack the file
+|   |-backups                             <- each pack / unpack will generate a packup of the `saturn91-dungeon-crawler.p8` file here (max file number = 10 by default)
+|   |-saturn91-dungeon-crawler.p8.config  <- config file, have a look at all the settings
 |-lua                                     <- work with the lua files included here
 |   |-01_main.lua                         <- tab 1 of pico8 project        
 |-meta
@@ -91,6 +94,8 @@ If pico8 is installed as described in [Dependencies](#Dependencies) this command
 1. pack the lua files into the `saturn91-dungeon-crawler.p8` file
 2. run it in pico8
 3. unpack again (in case you edited something within pico8)
+4. provide the parameter `-t` along and prevent setup tests from firing each time
+5. provide the parameter `-u` along and prevent pico8-cli from unpacking again afterwards. You usally will us this if you do NOT edit code, graphics, map or sound Data within pico8 but only test your last changes from the external editor you are using. 
 
 ## Unpack
 ```
@@ -139,6 +144,20 @@ i: 10	<- use sprite 10
 s: 2	<- display 16x16 pixel (so in this case a 2x2 sprite
 c: 0	<- the transparency color, default is 0 (black)
 ```
+
+## Deploying
+
+At the moment I only support the deploy automation Butler which allows you to upload to itch.io.
+Please feel free to suggest/request further Platforms (like steam google play and so on...). I can not promise that I will implement them myself, but as this project is open source, please let me know (open a topic on this repo)
+
+### Deploy to Itch
+Deploying is only possible after [building](#build) your project.
+
+1. run cmd `deploy itch` if you have already build your project
+2. run cmd `deploy itch -b` to build project and then deploy it
+3. if this is your first time deploying a file "deploy.config" will get generated in your project
+4. Make sure you already have an itch project setup for example: https://saturn91.itch.io/best-game-ever
+5. Replace the string "youruser/yourgame" with YOUR Username and your game in my case it would be: "saturn91/best-game-ever"
 
 ## Unit Testing setup and usage
 ### I do not know what Unit testing is

@@ -27,6 +27,37 @@
     "pico8-cli build": {
       "commandName": "Project",
       "commandLineArgs": "build debug"
+    },
+    "pico8-cli help": {
+      "commandName": "Project",
+      "commandLineArgs": "help"
+    },
+    "pico8-cli run wrong param": {
+      "commandName": "Project",
+      "commandLineArgs": "run test"
+    },
+    "pico8-cli run -t": {
+      "commandName": "Project",
+      "commandLineArgs": "run -t"
+    },
+    "pico8-cli": {
+      "commandName": "Project"
+    },
+    "pico8-cli status": {
+      "commandName": "Project",
+      "commandLineArgs": "status"
+    },
+    "pico8-cli deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy debug itch"
+    },
+    "pico8-cli deploy (no debug)": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy itch"
+    },
+    "pico8-cli run -u": {
+      "commandName": "Project",
+      "commandLineArgs": "run -u"
     }
   }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace pico8_cli
@@ -11,6 +12,7 @@ namespace pico8_cli
         public static readonly string pico8CardFolder = Program.GLOBAL_SETTINGS[GlobalSettings.Values.localPico8_cart_folder_location].Replace("%APPDATA%", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
         public static readonly string internalBuildFile = "./.pico8-cli/build.p8";
         public static readonly string buildIconConfig = "./buildIconConfig.txt";
+        public static readonly string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
 
         private static string SetupBuildP8File()
         {
@@ -44,6 +46,11 @@ namespace pico8_cli
             return output;
         }
 
+        public static bool CanBuild()
+        {
+            return File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt");
+        }
+
         private static bool Init()
         {
             // 1. get build path from global config
@@ -54,7 +61,7 @@ namespace pico8_cli
                 return false;
             }
 
-            if (!File.Exists(Program.RESOURCE_FOLDER + "/" + "__label__.txt"))
+            if (!CanBuild())
             {
                 Util.Error("you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card and then save (ctrl+S)");
                 return false;
@@ -76,14 +83,14 @@ c: 0";
             return true;
         }
 
-        public static void Do()
+        public static bool Do()
         {
             if (!Init())
             {
                 Util.Error("not able to build...");
-                return;
+                return false;
             }
-            string buildFolder = pico8CardFolder + "/" + Util.GetGameName();
+
             string gameName = Util.GetGameName();
             Lua.Pack();
 
@@ -100,12 +107,15 @@ c: 0";
             if (!File.Exists(buildFolder + "/" + gameName + ".p8"))
             {
                 Util.Error("not able to write: " + buildFolder + "/" + gameName + ".p8");
-                return;
+                return false;
             }
 
             Directory.CreateDirectory(buildFolder + "/" + Util.GetGameName() + "_html");
             Util.ExecuteCommandSync("\"C:\\Program Files (x86)\\PICO-8\\pico8.exe\" -x " + internalBuildFile);
+            ZipFile.CreateFromDirectory(buildFolder + "/" + gameName + "_html", buildFolder + "/" + gameName + "_html.zip");
             Util.Info("Build succeded, find your files here: " + buildFolder);
+
+            return true;
         }
     }
 }
