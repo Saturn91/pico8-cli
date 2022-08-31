@@ -11,8 +11,8 @@ namespace pico8_cli
         private static readonly string butlerExePath = Program.INSTALLATION_PATH + "/butler/butler.exe";
         private static readonly string itchIoConfig = Program.current_path + "/deploy.config";
         private static string initialItchIoConfig = @"itch.io-project: youruser/yourgame";
-        private static string[] pico8CliBuilds = { "X_html.zip", "X.bin/X_linux.zip", "X.bin/X_osx.zip", "X.bin/X_raspi.zip", "X.bin/X_windows.zip" };
-        private static string[] itchIoChannels = { "web", "linux", "osx", "linux", "windows" };
+        private static string[] pico8CliBuilds = { "X.bin/X_linux.zip", "X.bin/X_osx.zip", "X.bin/X_raspi.zip", "X.bin/X_windows.zip", "X_html.zip", };
+        private static string[] itchIoChannels = { "linux", "osx", "raspbi", "windows", "web" };
 
         public enum DeployPlatform
         {
@@ -31,7 +31,6 @@ namespace pico8_cli
             if (build) Command.COMMANDS["build"].Run(new string[0]);
 
             // 4. check if build specific file(s) exists and deploy them -> log id successfull or not
-
             if (!Deploy(platform)) return CommandState.FAILED;
 
             return CommandState.SUCCESS;
@@ -79,8 +78,11 @@ namespace pico8_cli
                     {
                         case DeployPlatform.itch:
                             string itchIoGameId = File.ReadAllLines(itchIoConfig)[0].Split(":")[1].Substring(1);
-                            Util.ExecuteCommandSync("butler push " + path + " " + itchIoGameId + ":" + itchIoChannels[i] );
+                            Util.ExecuteCommandSync(butlerExePath +  " push " + path + " " + itchIoGameId + ":" + itchIoChannels[i] );
                             succeded = true;
+
+                            if (itchIoChannels[i] == "web") Util.Info("Deployed web version to https://" + itchIoGameId.Replace("/", ".itch.io/") + " please make sure to set this project up as playable in the browser");
+
                             break;
                     }
                 } else
