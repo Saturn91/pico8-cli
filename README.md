@@ -30,7 +30,9 @@ To use the file globaly on your machine you need to install it manually.
 ```
 C:\Program Files (x86)\my_cmd_tools
   |-pico8-cli <-folder not zip!
+      |-butler <- this holds a local copy of itch.io's butler, replace with newer version or delete completly if you wont deploy to itch
       |-test   <- folder which holds the testFramework build
+      |-build.p8
       |-pico8.cli.config
       |-pico8-cli.deps.json
       |-pico8-cli.dll
