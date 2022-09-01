@@ -151,6 +151,7 @@ At the moment I only support the deploy automation Butler which allows you to up
 Please feel free to suggest/request further Platforms (like steam google play and so on...). I can not promise that I will implement them myself, but as this project is open source, please let me know (open a topic on this repo)
 
 ### Deploy to Itch
+For deploying I use a local installation of [itch.io's butler](https://itch.io/docs/butler/) within the projects installation folder ./butler.
 Deploying is only possible after [building](#build) your project.
 
 1. run cmd `deploy itch` if you have already build your project
