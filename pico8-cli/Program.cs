@@ -81,7 +81,7 @@ namespace pico8_cli
 
             LogInstallAndLocationInfos();
 
-            return result == CommandState.SUCCESS ? 1 : -1;
+            return result == CommandState.SUCCESS ? 0 : 1;
         }
     }
 }
