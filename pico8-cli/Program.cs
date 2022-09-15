@@ -72,6 +72,7 @@ namespace pico8_cli
 
                 result = Command.COMMANDS[args[0]].Run(parameters);
                 if (result == CommandState.SUCCESS) Util.Info("cmd: " + args[0] + " succeded!");
+                if (result == CommandState.CANCEL) Util.Info("cmd: " + args[0] + " was canceld");
                 
             } else
             {

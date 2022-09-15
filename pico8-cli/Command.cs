@@ -9,7 +9,8 @@ namespace pico8_cli
     {
         SUCCESS,
         WRONG_PARAMS,
-        FAILED
+        FAILED,
+        CANCEL
     }
 
     public class NumberParameterValue
@@ -324,10 +325,9 @@ namespace pico8_cli
 
         protected override CommandState OnRun(string[] parameters)
         {
-            int steps = 1;
+            int steps = -1;
 
             NumberParameterValue passedStepsParameter = HasNumberParameter("steps", parameters);
-
 
             if (passedStepsParameter.valid) steps = passedStepsParameter.value;     
 
