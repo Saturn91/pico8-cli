@@ -336,7 +336,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             File.WriteAllLines(Program.REST_OF_FILE_PATH, lines);
         }
 
-        public static bool UnPack(bool doOverride)
+        public static bool UnPack(bool doOverride, bool noBackup = false)
         {
             if (Directory.Exists("lua") || Directory.Exists(Program.RESOURCE_FOLDER))
             {
@@ -378,7 +378,7 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
             string[] lines = File.ReadAllLines(Util.GetGameName() + ".p8");
 
-            CreateBackupOfPico8File("before_unpack");
+            if (!noBackup) CreateBackupOfPico8File("before_unpack");
 
             int lineBeginning = Int32.MaxValue;
             int lineEnd = -1;
@@ -416,11 +416,6 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
             int maxNumberOfBackups = backupFilePaths.Length;
 
-            foreach(string s in backupFilePaths)
-            {
-                Util.Debug(s);
-            }
-
             if (maxNumberOfBackups == 0)
             {
                 Util.Error("There are not yet Backup files to restore from...");
@@ -435,14 +430,14 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
             try
             {
-                string restorationFile = backupFilePaths[maxNumberOfBackups - (steps - 1)];
+                string restorationFile = backupFilePaths[maxNumberOfBackups - steps];
                 File.Copy(restorationFile, Util.GetGameName() + ".p8", true);
                 Util.Info("restored from file: " + restorationFile);
-                UnPack(true);
+                UnPack(true, true);
                 return CommandState.SUCCESS;
-            } catch
+            } catch(Exception e)
             {
-                Util.Error("Something went wrong while coping the backup file...");
+                Util.Error("Something went wrong while coping the backup file... \n" + e.ToString());
                 return CommandState.FAILED;
             }           
         }
