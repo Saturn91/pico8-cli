@@ -58,6 +58,10 @@
     "pico8-cli run -u": {
       "commandName": "Project",
       "commandLineArgs": "run -u"
+    },
+    "pico8-cli restore steps=2": {
+      "commandName": "Project",
+      "commandLineArgs": "restore steps=2 debug"
     }
   }
 }
