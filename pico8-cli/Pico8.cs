@@ -410,27 +410,60 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
             return true;
         }
 
-        public static CommandState Rollback(int steps)
+        public static CommandState Rollback(int steps = -1)
         {
             string[] backupFilePaths = Directory.GetFiles(backupPath);
-
             int maxNumberOfBackups = backupFilePaths.Length;
 
-            if (maxNumberOfBackups == 0)
-            {
-                Util.Error("There are not yet Backup files to restore from...");
-                return CommandState.WRONG_PARAMS;
-            }
+            int selectedFile = steps;
 
-            if (steps <= 0 || steps > maxNumberOfBackups)
+            if (selectedFile == -1)
+            {
+                bool invalidEntry = true;
+
+                if (maxNumberOfBackups == 0)
+                {
+                    Util.Error("There are not yet Backup files to restore from...");
+                    return CommandState.WRONG_PARAMS;
+                }
+
+                while (invalidEntry)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("     " + backupPath);
+                    for (int i = 0; i < backupFilePaths.Length; i++)
+                    {
+                        string fileContentSymbol = i == backupFilePaths.Length - 1 ? " \\-" : " |-";
+                        Console.WriteLine("  " + (i + 1) + ":   " + fileContentSymbol + backupFilePaths[i].Substring(backupPath.Length));
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine();
+
+                    Console.WriteLine("please type the number of the file you whish to restore from");
+                    Console.WriteLine("enter a number / any key + [ENTER] to exit");
+                    string userInput = Console.ReadLine();
+                    try
+                    {
+                        selectedFile = int.Parse(userInput);
+                        invalidEntry = false;
+                        if (selectedFile < 1 || selectedFile > maxNumberOfBackups) invalidEntry = true;
+                    }
+                    catch
+                    {
+                        return CommandState.CANCEL;
+                    }
+                }
+            }                      
+
+            if (selectedFile == -1)
             {
                 Util.Error("Please provide a value for steps=number which is > 0 and <= " + maxNumberOfBackups);
-                return CommandState.WRONG_PARAMS;
+                return CommandState.FAILED;
             }
 
             try
             {
-                string restorationFile = backupFilePaths[maxNumberOfBackups - steps];
+                string restorationFile = backupFilePaths[maxNumberOfBackups - selectedFile];
                 File.Copy(restorationFile, Util.GetGameName() + ".p8", true);
                 Util.Info("restored from file: " + restorationFile);
                 UnPack(true, true);

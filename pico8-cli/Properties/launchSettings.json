@@ -61,7 +61,11 @@
     },
     "pico8-cli restore steps=2": {
       "commandName": "Project",
-      "commandLineArgs": "restore steps=2 debug"
+      "commandLineArgs": "restore debug steps=2"
+    },
+    "pico8-cli restore debug": {
+      "commandName": "Project",
+      "commandLineArgs": "restore debug"
     }
   }
 }
