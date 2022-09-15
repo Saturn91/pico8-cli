@@ -18,6 +18,7 @@ What it provides
 8. run cmd `pico8-cli test` to setup (first time) and run tests
 10. run cmd `pico8-cli status` to see if you are currently within a pico8-cli project or not
 11. run cmd `pico8-cli help` to see all possible commands and their parameters
+12. run cmd `pico8-cli restore` to select a backupfile to restore from
 
 # Dependencies
 Before you can use you have to make sure that Pico8 is installed on your loacla machine. The whole init/unpack/pack stuff will work, but to use the run cmd you need to have pico8 locally at the default path `C:\\Program Files (x86)\\PICO-8\\pico8.exe\` installed.
