@@ -409,5 +409,42 @@ The internal structure of the native .p8 file got splitted in the lua/* and reso
 
             return true;
         }
+
+        public static CommandState Rollback(int steps)
+        {
+            string[] backupFilePaths = Directory.GetFiles(backupPath);
+
+            int maxNumberOfBackups = backupFilePaths.Length;
+
+            foreach(string s in backupFilePaths)
+            {
+                Util.Debug(s);
+            }
+
+            if (maxNumberOfBackups == 0)
+            {
+                Util.Error("There are not yet Backup files to restore from...");
+                return CommandState.WRONG_PARAMS;
+            }
+
+            if (steps <= 0 || steps > maxNumberOfBackups)
+            {
+                Util.Error("Please provide a value for steps=number which is > 0 and <= " + maxNumberOfBackups);
+                return CommandState.WRONG_PARAMS;
+            }
+
+            try
+            {
+                string restorationFile = backupFilePaths[maxNumberOfBackups - (steps - 1)];
+                File.Copy(restorationFile, Util.GetGameName() + ".p8", true);
+                Util.Info("restored from file: " + restorationFile);
+                UnPack(true);
+                return CommandState.SUCCESS;
+            } catch
+            {
+                Util.Error("Something went wrong while coping the backup file...");
+                return CommandState.FAILED;
+            }           
+        }
     }
 }

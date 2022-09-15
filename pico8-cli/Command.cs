@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace pico8_cli
 {
@@ -9,6 +10,12 @@ namespace pico8_cli
         SUCCESS,
         WRONG_PARAMS,
         FAILED
+    }
+
+    public class NumberParameterValue
+    {
+        public int value = -1;
+        public bool valid = false;
     }
 
     public abstract class Command
@@ -40,7 +47,8 @@ namespace pico8_cli
                 { "--h", new Help()},
                 { "-h" , new Help()},
                 { "help", new Help() },
-                { "?", new Help() }
+                { "?", new Help() },
+                { "restore", new Restore() }
             };            
         }
 
@@ -64,11 +72,17 @@ namespace pico8_cli
             this.updateConfigFile = updateConfigFile;
         }
 
+        private bool IsAllowedParameter(string parameter) {
+            if (allowedParameters.Contains(parameter)) return true;
+            if (allowedParameters.Contains(Regex.Replace(parameter, @"[0-9]+$", "number"))) return true;
+            return false;
+        }
+
         public CommandState Run(string[] parameters)
         {
             foreach (string parameter in parameters)
             {
-                if (!allowedParameters.Contains(parameter))
+                if (!IsAllowedParameter(parameter))
                 {
                     Console.WriteLine("Parameter: " + parameter + " is no valid parameter for the cmd: " + name);
                     Console.WriteLine("    " + Help());
@@ -113,6 +127,26 @@ namespace pico8_cli
         protected bool HasParameter(string parameter, string[] passedParameters)
         {
             return passedParameters.Contains(parameter);
+        }
+
+        protected NumberParameterValue HasNumberParameter(string prefix, string[] passedParameters)
+        {
+            NumberParameterValue result = new NumberParameterValue();
+
+            foreach(string passedParameter in passedParameters)
+            {
+                if(Regex.Match(passedParameter, @"[A-Za-z]*=\d*").Success && passedParameter.StartsWith(prefix+"="))
+                {
+                    try
+                    {
+                        result.value = int.Parse(passedParameter.Substring(prefix.Length+1));
+                        result.valid = true;
+                    }
+                    catch { }
+                }
+            }
+
+            return result;
         }
     }
 
@@ -284,4 +318,25 @@ namespace pico8_cli
         }
     }
 
+    public class Restore : Command
+    {
+        public Restore() : base("restore", new string[] {"steps=number"}) { }
+
+        protected override CommandState OnRun(string[] parameters)
+        {
+            int steps = 1;
+
+            NumberParameterValue passedStepsParameter = HasNumberParameter("steps", parameters);
+
+
+            if (passedStepsParameter.valid) steps = passedStepsParameter.value;     
+
+            return Pico8.Rollback(steps);
+        }
+
+        protected override string GetSpecificHelp()
+        {
+            return "rollback to an older state from a backup file (maybe after some lost changes due to an error)";
+        }
+    }
 }

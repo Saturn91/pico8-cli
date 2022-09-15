@@ -64,7 +64,7 @@ namespace pico8_cli
                 if (args[0] != "init" && args[0] != "help" && args[0] != "status" &! File.Exists(PROJECT_CONFIG_FILE_PATH))
                 {
                     Util.Error("not within a pico8-cli project, please run pioc8-cli init");
-                    Command.COMMANDS["help"].Run(parameters);
+                    Command.COMMANDS["help"].Run(new string[0]);
                     return -1;
                 }
 
