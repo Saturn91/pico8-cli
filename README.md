@@ -120,7 +120,7 @@ Building was never easier with pico8, just run the cmd `pico8-cli build` and get
 
 You have to make sure to capture a label before you start a build if you get the following error description:
 ```
-C:\Users\manue\Documents\GitHub\wowie_jam_4_0>pico8-cli build
+C:\Users\manue\Documents\GitHub\saturn91-dungeon-crawler>pico8-cli build
 [info]: build
 [err.]: you didn't capture a cratridge label yet, please do so by pressing F7 in the running pico8 card and then save (ctrl+S)
 [err.]: not able to build...
@@ -274,3 +274,35 @@ assert_equal(_1 and _2 and _3 and _4, true, "get rnd from array")
 ### Setup a Github Page on master so you can always see the state of your tests
 If you want to always see the latest state of your test on your github repo, as the index.html gets saved within your github repo, you can host your project as a github page and always see if all tests are passing on your current master.
 Learn [here](https://pages.github.com/) hwo you can setup a Github page from your Github repository.
+
+## Restore parameter
+```
+C:\Users\saturn19\Documents\GitHub\saturn91-dungeon-crawler>pico8-cli restore steps=2 
+[info]: restored from file: .pico8-cli/backups/2022_09_15_22_20_20_saturn91-dungeon-crawler.before_unpack.p8
+[info]: cmd: restore succeded!
+```
+
+This command allows restoring from a backupfiles (these get generated automatically on each pack / unpack / run command). The parameter `steps=number` is optional, without the parameter it will list all available backup files and let you choose.
+
+```
+C:\Users\saturn19\Documents\GitHub\saturn91-dungeon-crawler>pico8-cli restore        
+
+     .pico8-cli/backups/
+  1:    |-2022_09_06_23_12_12_saturn91-dungeon-crawler.before_unpack.p8
+  2:    |-2022_09_06_23_12_47_saturn91-dungeon-crawler.before_pack.p8
+  3:    |-2022_09_06_23_21_36_saturn91-dungeon-crawler.before_unpack.p8
+  4:    |-2022_09_06_23_23_29_saturn91-dungeon-crawler.before_pack.p8
+  5:    |-2022_09_06_23_23_44_saturn91-dungeon-crawler.before_unpack.p8
+  6:    |-2022_09_15_22_16_41_saturn91-dungeon-crawler.before_unpack.p8
+  7:    |-2022_09_15_22_20_06_saturn91-dungeon-crawler.before_unpack.p8
+  8:    |-2022_09_15_22_20_14_saturn91-dungeon-crawler.before_unpack.p8
+  9:    |-2022_09_15_22_20_20_saturn91-dungeon-crawler.before_unpack.p8
+  10:    \-2022_09_15_22_20_29_saturn91-dungeon-crawler.before_unpack.p8
+
+
+please type the number of the file you whish to restore from
+enter a number / any key + [ENTER] to exit
+10
+[info]: restored from file: .pico8-cli/backups/2022_09_06_23_12_12_saturn91-dungeon-crawler.before_unpack.p8
+[info]: cmd: restore succeded!
+```
